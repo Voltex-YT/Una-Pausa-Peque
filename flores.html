@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jardín de Tulipanes Cósmico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #03020a;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #f8fafc;
+        }
+
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            touch-action: none;
+        }
+
+        .font-letter-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+        }
+
+        .font-letter-body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .letter-glass {
+            position: relative;
+            background: linear-gradient(145deg, rgba(18, 10, 38, 0.78), rgba(10, 8, 24, 0.76) 55%, rgba(6, 22, 30, 0.80));
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 209, 102, 0.28);
+            box-shadow:
+                0 28px 70px rgba(0, 0, 0, 0.82),
+                0 0 55px rgba(236, 72, 153, 0.22),
+                0 0 85px rgba(52, 211, 153, 0.14),
+                inset 0 1px 1px rgba(255, 255, 255, 0.18),
+                inset 0 0 28px rgba(167, 243, 208, 0.08);
+        }
+
+        .letter-glass::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255, 209, 102, 0.60), rgba(236, 72, 153, 0.38), rgba(52, 211, 153, 0.50));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .letter-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .letter-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .letter-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 209, 102, 0.28);
+            border-radius: 999px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div id="hint-pill"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none opacity-0 transition-opacity duration-1000">
+        <div
+            class="px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-xs sm:text-sm text-pink-100/85 tracking-wide flex items-center gap-2 shadow-lg">
+            <span class="w-2 h-2 rounded-full bg-amber-300 animate-ping"></span>
+            <span>Toca el tulipán central</span>
+        </div>
+    </div>
+
+    <div id="letter-overlay"
+        class="fixed inset-0 z-30 flex items-end sm:items-center justify-end p-4 sm:p-0 opacity-0 pointer-events-none transition-opacity duration-700 ease-out">
+        <div id="letter-card"
+            class="letter-glass relative w-full max-w-[440px] sm:mr-[5%] rounded-3xl p-6 sm:p-9 transform translate-y-8 sm:translate-y-0 sm:translate-x-12 scale-95 transition-all duration-700 ease-out">
+
+            <button id="close-letter-btn" aria-label="Cerrar carta"
+                class="absolute top-4 right-4 sm:top-5 sm:right-5 w-9 h-9 rounded-full bg-white/5 hover:bg-white/15 border border-white/15 flex items-center justify-center text-white/75 hover:text-white transition-all active:scale-90 cursor-pointer">
+                <span class="text-xl leading-none font-light">&times;</span>
+            </button>
+
+            <div class="flex items-center gap-2.5 mb-3">
+                <span class="h-[1px] w-7 bg-gradient-to-r from-transparent to-amber-300/80"></span>
+                <span class="text-amber-200/90 text-[11px] tracking-[0.24em] uppercase font-medium">Un respiro para
+                    ti</span>
+                <span class="text-amber-300 text-xs">✦</span>
+            </div>
+
+            <div id="letter-content" class="letter-scroll max-h-[62vh] sm:max-h-[68vh] overflow-y-auto pr-1">
+                <h2
+                    class="font-letter-title text-2xl sm:text-[31px] font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-pink-200 to-emerald-200 mb-4 leading-tight">
+                    Pausa obligatoria entre tanto ruido
+                </h2>
+
+                <div class="flex items-center gap-3 mb-5 opacity-75">
+                    <span
+                        class="h-[1px] flex-1 bg-gradient-to-r from-amber-300/40 via-pink-300/30 to-transparent"></span>
+                    <span class="text-pink-200/80 text-xs tracking-widest">✧ ❀ ✧</span>
+                    <span
+                        class="h-[1px] flex-1 bg-gradient-to-l from-emerald-300/40 via-pink-300/30 to-transparent"></span>
+                </div>
+
+                <div
+                    class="space-y-4 font-letter-body text-[14.5px] sm:text-[15.5px] text-slate-100/90 leading-[1.75] font-light">
+                    <p>
+                        Si llegaste hasta aquí, es señal de que necesitas detenerte un segundo, tomar aire y dejar de
+                        pensar en todo lo que falta por hacer. A veces los días se sienten como un torbellino lleno de
+                        prisa, pero hasta el caos más grande termina encontrando su forma y su calma, igual que este
+                        jardín.
+                    </p>
+                    <p>
+                        Estás haciendo un gran esfuerzo y se nota muchísimo. Suelta los hombros, date permiso de
+                        simplemente estar aquí y no te exijas de más hoy. Todo va a salir bien, paso a paso, y aquí
+                        tienes este rincón tranquilo siempre que necesites escapar un rato.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
+                <span class="text-xs text-pink-200/65 font-light tracking-wide">Respira hondo</span>
+                <span class="font-letter-title italic text-lg text-amber-200/95">Aquí estoy contigo. Te quiere N</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const CONFIG = {
+                tulipCount: 135,
+                particlesPerTulip: 330,
+                heroParticlesCount: 2450,
+                stardustCount: 9500,
+                bgStarsCount: 3500,
+                morphSpeed: 1.15,
+                glowIntensity: 1.55
+            };
+
+            const PALETTE = {
+                petalBase: new THREE.Color(0xc026d3),
+                petalTip: new THREE.Color(0xff7eb6),
+                stem: new THREE.Color(0x6d28d9),
+                spark: new THREE.Color(0xffd166),
+                heroBase: new THREE.Color(0xf43f5e),
+                heroTip: new THREE.Color(0xffe4e6)
+            };
+
+            let scene, camera, renderer, clock;
+            let gardenPoints, stardustPoints, bgStarsPoints, nebulaMesh, auroraSkyMesh, auroraCurtainMesh;
+            let heroHitbox;
+            let uniforms, stardustUniforms, starsUniforms, nebulaUniforms, auroraUniforms;
+
+            let morphProgress = 0.0;
+            let auroraProgress = 0.0;
+            let auroraActive = false;
+            let letterOpen = false;
+            let letterProgress = 0.0;
+            let heroHover = 0.0;
+            let isHoveringHero = false;
+            let hintShown = false;
+
+            const HERO_POS = new THREE.Vector3(0.0, -2.05, 1.5);
+            const HERO_SCALE = 1.52;
+
+            let mouseNDC = new THREE.Vector2(999, 999);
+            let targetCameraRot = { x: 0.13, y: 0.0 };
+            let currentCameraRot = { x: 0.13, y: 0.0 };
+            let isPointerDown = false;
+            let pointerDownPos = { x: 0, y: 0 };
+            let lastPointer = { x: 0, y: 0 };
+
+            let currentLookAt = new THREE.Vector3(0, -0.35, -2.5);
+            let currentCamPos = new THREE.Vector3(0, 1.8, 12.2);
+
+            let raycaster = new THREE.Raycaster();
+            let groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 1.5);
+            let worldCursor = new THREE.Vector3(0, -100, 0);
+            let smoothCursor = new THREE.Vector3(0, -100, 0);
+            let cursorEnergy = 0.0;
+
+            function createGlowTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 128;
+                canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+
+                const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+                gradient.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+                gradient.addColorStop(0.18, 'rgba(255, 245, 255, 0.94)');
+                gradient.addColorStop(0.45, 'rgba(255, 220, 245, 0.42)');
+                gradient.addColorStop(0.75, 'rgba(220, 180, 255, 0.12)');
+                gradient.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 128, 128);
+
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            function getTerrainHeight(x, z) {
+                return Math.sin(x * 0.14) * 0.60 + Math.cos(z * 0.12) * 0.50 - 2.35;
+            }
+
+            function buildCosmicAtmosphere() {
+                const glowTex = createGlowTexture();
+
+                nebulaUniforms = {
+                    uTime: { value: 0 },
+                    uAurora: { value: 0 }
+                };
+
+                const skyGeo = new THREE.SphereGeometry(95, 32, 32);
+                const skyMat = new THREE.ShaderMaterial({
+                    uniforms: nebulaUniforms,
+                    side: THREE.BackSide,
+                    depthWrite: false,
+                    vertexShader: `
+                        varying vec3 vWorldPos;
+                        void main() {
+                            vec4 wp = modelMatrix * vec4(position, 1.0);
+                            vWorldPos = wp.xyz;
+                            gl_Position = projectionMatrix * viewMatrix * wp;
+                        }
+                    `,
+                    fragmentShader: `
+                        precision highp float;
+                        uniform float uTime;
+                        uniform float uAurora;
+                        varying vec3 vWorldPos;
+
+                        float hash(vec2 p) {
+                            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+                        }
+
+                        float noise(vec2 p) {
+                            vec2 i = floor(p);
+                            vec2 f = fract(p);
+                            vec2 u = f * f * (3.0 - 2.0 * f);
+                            return mix(
+                                mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+                                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+                                u.y
+                            );
+                        }
+
+                        float fbm(vec2 p) {
+                            float v = 0.0;
+                            float a = 0.5;
+                            for (int i = 0; i < 4; i++) {
+                                v += a * noise(p);
+                                p *= 2.04;
+                                a *= 0.5;
+                            }
+                            return v;
+                        }
+
+                        void main() {
+                            vec3 dir = normalize(vWorldPos);
+                            float up = clamp(dir.y * 0.5 + 0.5, 0.0, 1.0);
+
+                            vec2 uv = dir.xz / (abs(dir.y) + 0.35) * 1.4;
+                            float n1 = fbm(uv + vec2(uTime * 0.015, -uTime * 0.01));
+                            float n2 = fbm(uv * 1.8 - vec2(uTime * 0.02, uTime * 0.015));
+
+                            vec3 deepSpace = vec3(0.012, 0.008, 0.039);
+                            vec3 violetNebula = vec3(0.14, 0.04, 0.28);
+                            vec3 magentaNebula = vec3(0.32, 0.05, 0.22);
+                            vec3 horizonGlow = vec3(0.08, 0.03, 0.16);
+
+                            vec3 col = mix(horizonGlow, deepSpace, smoothstep(0.35, 0.92, up));
+                            col += violetNebula * smoothstep(0.35, 0.85, n1) * 0.55;
+                            col += magentaNebula * smoothstep(0.45, 0.90, n2) * 0.42;
+
+                            if (uAurora > 0.001) {
+                                vec3 auroraSkyGlow = mix(vec3(0.04, 0.35, 0.28), vec3(0.26, 0.08, 0.38), n2);
+                                col += auroraSkyGlow * uAurora * 0.48 * smoothstep(0.35, 0.88, up);
+                            }
+
+                            gl_FragColor = vec4(col, 1.0);
+                        }
+                    `
+                });
+                nebulaMesh = new THREE.Mesh(skyGeo, skyMat);
+                scene.add(nebulaMesh);
+
+                auroraUniforms = {
+                    uTime: { value: 0 },
+                    uAurora: { value: 0 }
+                };
+
+                const auroraSkyGeo = new THREE.CylinderGeometry(36, 44, 26, 64, 1, true);
+                const auroraMat = new THREE.ShaderMaterial({
+                    uniforms: auroraUniforms,
+                    transparent: true,
+                    depthWrite: false,
+                    side: THREE.DoubleSide,
+                    blending: THREE.AdditiveBlending,
+                    vertexShader: `
+                        varying vec2 vUv;
+                        varying vec3 vPos;
+                        void main() {
+                            vUv = uv;
+                            vPos = position;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        precision highp float;
+                        uniform float uTime;
+                        uniform float uAurora;
+                        varying vec2 vUv;
+                        varying vec3 vPos;
+
+                        void main() {
+                            if (uAurora <= 0.001) discard;
+
+                            float angle = vUv.x * 6.2831853;
+                            float h = vUv.y;
+
+                            float wave1 = sin(angle * 3.0 + uTime * 0.65 + sin(angle * 2.0 - uTime * 0.4) * 1.4);
+                            float wave2 = cos(angle * 5.0 - uTime * 0.50 + h * 3.0);
+                            float wave3 = sin(angle * 8.0 + uTime * 0.95);
+
+                            float ribbon = smoothstep(0.05, 0.92, wave1 * 0.5 + 0.5) * (0.55 + 0.45 * wave2);
+                            float rays = 0.65 + 0.35 * sin(angle * 28.0 + uTime * 1.6 + wave1 * 3.0) * wave3;
+
+                            float verticalMask = smoothstep(0.0, 0.26, h) * smoothstep(1.0, 0.32, h);
+                            float intensity = ribbon * rays * verticalMask * uAurora;
+
+                            vec3 emerald = vec3(0.10, 0.95, 0.66);
+                            vec3 violet = vec3(0.56, 0.24, 0.96);
+                            vec3 magenta = vec3(0.95, 0.25, 0.68);
+                            vec3 gold = vec3(1.0, 0.84, 0.42);
+
+                            vec3 col = mix(emerald, violet, smoothstep(0.15, 0.72, h));
+                            col = mix(col, magenta, smoothstep(0.55, 0.95, h) * 0.75);
+                            col += gold * smoothstep(0.06, 0.24, h) * smoothstep(0.38, 0.14, h) * 0.65;
+
+                            gl_FragColor = vec4(col * intensity * 1.25, clamp(intensity * 0.82, 0.0, 1.0));
+                        }
+                    `
+                });
+                auroraSkyMesh = new THREE.Mesh(auroraSkyGeo, auroraMat);
+                auroraSkyMesh.position.set(0, 10.5, -8.0);
+                scene.add(auroraSkyMesh);
+
+                const curtainGeo = new THREE.CylinderGeometry(16, 22, 13, 64, 1, true);
+                auroraCurtainMesh = new THREE.Mesh(curtainGeo, auroraMat);
+                auroraCurtainMesh.position.set(0, 3.8, -2.0);
+                auroraCurtainMesh.rotation.y = 1.2;
+                scene.add(auroraCurtainMesh);
+
+                const starPositions = new Float32Array(CONFIG.bgStarsCount * 3);
+                const starSeeds = new Float32Array(CONFIG.bgStarsCount * 3);
+                for (let i = 0; i < CONFIG.bgStarsCount; i++) {
+                    const i3 = i * 3;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(Math.random() * 0.92 + 0.04);
+                    const r = 48 + Math.random() * 36;
+
+                    starPositions[i3] = r * Math.sin(phi) * Math.cos(theta);
+                    starPositions[i3 + 1] = r * Math.cos(phi) - 3.0;
+                    starPositions[i3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+                    starSeeds[i3] = Math.random();
+                    starSeeds[i3 + 1] = Math.random();
+                    starSeeds[i3 + 2] = Math.random();
+                }
+
+                const starsGeo = new THREE.BufferGeometry();
+                starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+                starsGeo.setAttribute('aSeed', new THREE.BufferAttribute(starSeeds, 3));
+
+                starsUniforms = {
+                    uTime: { value: 0 },
+                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+                    uTexture: { value: glowTex }
+                };
+
+                const starsMat = new THREE.ShaderMaterial({
+                    uniforms: starsUniforms,
+                    transparent: true,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending,
+                    vertexShader: `
+                        attribute vec3 aSeed;
+                        uniform float uTime;
+                        uniform float uPixelRatio;
+                        varying float vAlpha;
+                        varying vec3 vColor;
+
+                        void main() {
+                            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                            gl_Position = projectionMatrix * mvPosition;
+
+                            float twinkle = 0.45 + 0.55 * sin(uTime * (1.2 + aSeed.x * 3.2) + aSeed.y * 40.0);
+                            vAlpha = twinkle * (0.45 + 0.55 * aSeed.z);
+
+                            vec3 c1 = vec3(0.85, 0.90, 1.0);
+                            vec3 c2 = vec3(1.0, 0.86, 0.68);
+                            vec3 c3 = vec3(0.96, 0.72, 0.92);
+                            vColor = mix(mix(c1, c2, aSeed.x), c3, step(0.75, aSeed.y) * 0.6);
+
+                            gl_PointSize = clamp((10.0 + aSeed.z * 16.0) * uPixelRatio * (35.0 / max(-mvPosition.z, 10.0)), 1.2, 8.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        precision highp float;
+                        uniform sampler2D uTexture;
+                        varying float vAlpha;
+                        varying vec3 vColor;
+
+                        void main() {
+                            vec4 tex = texture2D(uTexture, gl_PointCoord);
+                            if (tex.a < 0.01) discard;
+                            gl_FragColor = vec4(vColor * tex.rgb, tex.a * vAlpha);
+                        }
+                    `
+                });
+
+                bgStarsPoints = new THREE.Points(starsGeo, starsMat);
+                scene.add(bgStarsPoints);
+
+                const dustPositions = new Float32Array(CONFIG.stardustCount * 3);
+                const dustSeeds = new Float32Array(CONFIG.stardustCount * 3);
+                for (let i = 0; i < CONFIG.stardustCount; i++) {
+                    const i3 = i * 3;
+                    dustPositions[i3] = (Math.random() - 0.5) * 44.0;
+                    dustPositions[i3 + 1] = -2.0 + Math.random() * 19.0;
+                    dustPositions[i3 + 2] = -22.0 + Math.random() * 34.0;
+
+                    dustSeeds[i3] = Math.random();
+                    dustSeeds[i3 + 1] = Math.random();
+                    dustSeeds[i3 + 2] = Math.random();
+                }
+
+                const dustGeo = new THREE.BufferGeometry();
+                dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+                dustGeo.setAttribute('aSeed', new THREE.BufferAttribute(dustSeeds, 3));
+
+                stardustUniforms = {
+                    uTime: { value: 0 },
+                    uAurora: { value: 0 },
+                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+                    uTexture: { value: glowTex }
+                };
+
+                const dustMat = new THREE.ShaderMaterial({
+                    uniforms: stardustUniforms,
+                    transparent: true,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending,
+                    vertexShader: `
+                        attribute vec3 aSeed;
+                        uniform float uTime;
+                        uniform float uAurora;
+                        uniform float uPixelRatio;
+                        varying float vAlpha;
+                        varying vec3 vColor;
+
+                        void main() {
+                            vec3 pos = position;
+                            float cycle = fract(aSeed.y + uTime * (0.03 + aSeed.x * 0.04));
+                            pos.y = -2.2 + cycle * 18.0;
+                            pos.x += sin(uTime * 0.45 + aSeed.z * 20.0) * 1.1;
+                            pos.z += cos(uTime * 0.40 + aSeed.x * 20.0) * 1.1;
+
+                            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                            gl_Position = projectionMatrix * mvPosition;
+
+                            float depth = max(-mvPosition.z, 1.0);
+                            float fadeEdges = smoothstep(0.0, 0.15, cycle) * smoothstep(1.0, 0.78, cycle);
+                            float twinkle = 0.55 + 0.45 * sin(uTime * (2.0 + aSeed.x * 3.5) + aSeed.y * 30.0);
+
+                            vAlpha = fadeEdges * twinkle * smoothstep(36.0, 8.0, depth) * (0.65 + 0.35 * uAurora);
+
+                            vec3 gold = vec3(1.0, 0.84, 0.46);
+                            vec3 pink = vec3(1.0, 0.48, 0.78);
+                            vec3 emerald = vec3(0.32, 0.96, 0.76);
+                            vec3 baseCol = mix(gold, pink, aSeed.z);
+                            vColor = mix(baseCol, emerald, uAurora * step(0.45, aSeed.x) * 0.75);
+
+                            float size = (12.0 + aSeed.z * 22.0) * (1.0 + uAurora * 0.25);
+                            gl_PointSize = clamp((size * uPixelRatio) / depth, 1.4, 24.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        precision highp float;
+                        uniform sampler2D uTexture;
+                        varying float vAlpha;
+                        varying vec3 vColor;
+
+                        void main() {
+                            vec4 tex = texture2D(uTexture, gl_PointCoord);
+                            if (tex.a < 0.01) discard;
+                            gl_FragColor = vec4(vColor * tex.rgb, tex.a * vAlpha);
+                        }
+                    `
+                });
+
+                stardustPoints = new THREE.Points(dustGeo, dustMat);
+                scene.add(stardustPoints);
+            }
+
+            function populateTulipParticles(opts) {
+                const {
+                    startIndex, count, center, scale, leanX, leanZ, rotY, delay, isHero,
+                    targetPositions, startPositions, partTypes, heightFactors, randomSeeds, tulipDelays, heroFlags
+                } = opts;
+
+                const stemHeight = 2.35 * scale;
+                const cosR = Math.cos(rotY);
+                const sinR = Math.sin(rotY);
+
+                for (let p = 0; p < count; p++) {
+                    const idx = startIndex + p;
+                    const i3 = idx * 3;
+                    const normP = p / count;
+
+                    let lx = 0, ly = 0, lz = 0;
+                    let partType = 0.0;
+                    let hFactor = 0.0;
+
+                    if (normP < 0.19) {
+                        const u = normP / 0.19;
+                        ly = u * stemHeight;
+                        const curve = Math.sin(u * Math.PI) * 0.11 * scale;
+                        const rStem = 0.032 * scale * (1.0 - u * 0.25);
+                        const theta = Math.random() * Math.PI * 2;
+                        lx = curve + Math.cos(theta) * rStem;
+                        lz = Math.sin(theta) * rStem;
+                        partType = 0.0;
+                        hFactor = u;
+                    } else if (normP < 0.42) {
+                        const leafSide = (p % 2 === 0) ? 1.0 : -1.0;
+                        const tLeaf = Math.pow(Math.random(), 0.85);
+                        const wLeaf = (Math.random() - 0.5) * 2.0;
+
+                        const widthProfile = Math.sin(tLeaf * Math.PI) * 0.34 * scale;
+                        const edgeBias = Math.sign(wLeaf) * Math.pow(Math.abs(wLeaf), 0.65);
+
+                        const leafLength = 1.65 * scale;
+                        const archOut = Math.sin(tLeaf * Math.PI * 0.85) * 0.68 * scale;
+                        const cupCurve = (1.0 - edgeBias * edgeBias) * 0.08 * scale;
+
+                        lx = leafSide * (archOut + cupCurve);
+                        ly = (0.15 + tLeaf * 0.78) * leafLength;
+                        lz = edgeBias * widthProfile + leafSide * 0.05;
+
+                        if (leafSide < 0) {
+                            const rot = 0.55;
+                            const nx = lx * Math.cos(rot) - lz * Math.sin(rot);
+                            const nz = lx * Math.sin(rot) + lz * Math.cos(rot);
+                            lx = nx;
+                            lz = nz;
+                        }
+
+                        partType = 1.0;
+                        hFactor = tLeaf;
+                    } else if (normP < 0.91) {
+                        const petalIdx = p % 6;
+                        const isInner = petalIdx >= 3;
+                        const baseAngle = (petalIdx % 3) * ((Math.PI * 2) / 3) + (isInner ? Math.PI / 3 : 0);
+
+                        const v = Math.random();
+                        const u = (Math.random() - 0.5) * 2.0;
+                        const uBiased = Math.sign(u) * Math.pow(Math.abs(u), 0.70);
+
+                        const petalH = (isInner ? 0.98 : 1.04) * scale;
+                        const bellyRadius = Math.sin(Math.pow(v, 0.75) * Math.PI * 0.88) * 0.45 * scale;
+                        const baseRadius = 0.09 * scale;
+                        const r = baseRadius + bellyRadius + (isInner ? -0.035 : 0.015) * scale;
+
+                        const angularSpan = Math.sin(v * Math.PI * 0.92) * 0.62;
+                        const theta = baseAngle + uBiased * angularSpan;
+                        const tipFlare = Math.pow(v, 4.0) * 0.075 * scale;
+
+                        lx = Math.cos(theta) * (r + tipFlare);
+                        lz = Math.sin(theta) * (r + tipFlare);
+                        ly = stemHeight - 0.05 * scale + v * petalH;
+
+                        partType = 2.0;
+                        hFactor = v;
+                    } else {
+                        const r = Math.random() * (isHero ? 0.34 : 0.16) * scale;
+                        const theta = Math.random() * Math.PI * 2;
+                        const v = Math.random();
+                        lx = Math.cos(theta) * r;
+                        lz = Math.sin(theta) * r;
+                        const extraLift = (isHero && v > 0.62) ? (v - 0.62) * 2.4 * scale : 0.0;
+                        ly = stemHeight + (0.25 + v * 0.60) * scale + extraLift;
+                        partType = 3.0;
+                        hFactor = v;
+                    }
+
+                    let rx = lx * cosR - lz * sinR;
+                    let rz = lx * sinR + lz * cosR;
+                    let ry = ly;
+
+                    rx += ry * leanX;
+                    rz += ry * leanZ;
+
+                    targetPositions[i3] = center.x + rx;
+                    targetPositions[i3 + 1] = center.y + ry;
+                    targetPositions[i3 + 2] = center.z + rz;
+
+                    const swirlAngle = (idx * 0.015) + (normP * 4.5) + (Math.random() - 0.5) * 1.4;
+                    const funnelHeight = 4.5 + Math.random() * 14.5 + (1.0 - normP) * 4.0;
+                    const funnelRadius = 1.6 + funnelHeight * 0.72 + (Math.random() - 0.5) * 3.5;
+
+                    startPositions[i3] = Math.cos(swirlAngle) * funnelRadius + Math.sin(funnelHeight * 0.4) * 2.5;
+                    startPositions[i3 + 1] = funnelHeight;
+                    startPositions[i3 + 2] = Math.sin(swirlAngle) * funnelRadius - 3.5;
+
+                    partTypes[idx] = partType;
+                    heightFactors[idx] = hFactor;
+                    tulipDelays[idx] = delay;
+                    heroFlags[idx] = isHero ? 1.0 : 0.0;
+
+                    randomSeeds[i3] = Math.random();
+                    randomSeeds[i3 + 1] = Math.random();
+                    randomSeeds[i3 + 2] = Math.random();
+                }
+            }
+
+            function buildTulipGarden() {
+                const ambientTotal = CONFIG.tulipCount * CONFIG.particlesPerTulip;
+                const totalParticles = ambientTotal + CONFIG.heroParticlesCount;
+
+                const targetPositions = new Float32Array(totalParticles * 3);
+                const startPositions = new Float32Array(totalParticles * 3);
+                const partTypes = new Float32Array(totalParticles);
+                const heightFactors = new Float32Array(totalParticles);
+                const randomSeeds = new Float32Array(totalParticles * 3);
+                const tulipDelays = new Float32Array(totalParticles);
+                const heroFlags = new Float32Array(totalParticles);
+
+                const tulipCenters = [];
+                for (let t = 0; t < CONFIG.tulipCount; t++) {
+                    const ratio = t / CONFIG.tulipCount;
+                    const angle = t * 2.3999632;
+                    const radius = 1.6 + Math.sqrt(ratio) * 19.5;
+
+                    let tx = Math.cos(angle) * radius * 1.28;
+                    let tz = Math.sin(angle) * radius - 3.2;
+
+                    if (tz > 9.5) tz -= 14.5;
+
+                    const dxHero = tx - HERO_POS.x;
+                    const dzHero = tz - HERO_POS.z;
+                    const distHero = Math.hypot(dxHero, dzHero);
+                    if (distHero < 2.65) {
+                        const pushAngle = Math.atan2(dzHero, dxHero) || (t * 1.1);
+                        tx = HERO_POS.x + Math.cos(pushAngle) * 2.75;
+                        tz = HERO_POS.z + Math.sin(pushAngle) * 2.75;
+                    }
+
+                    const ty = getTerrainHeight(tx, tz);
+                    const scale = 0.78 + Math.random() * 0.55;
+                    const leanX = (Math.random() - 0.5) * 0.24;
+                    const leanZ = (Math.random() - 0.5) * 0.24;
+                    const rotY = Math.random() * Math.PI * 2;
+                    const delay = Math.min(0.42, Math.max(0.0, (radius / 22.0) * 0.30 + Math.random() * 0.14));
+
+                    tulipCenters.push({ x: tx, y: ty, z: tz, scale, leanX, leanZ, rotY, delay });
+                }
+
+                tulipCenters.sort((a, b) => b.z - a.z);
+
+                for (let t = 0; t < CONFIG.tulipCount; t++) {
+                    const tulip = tulipCenters[t];
+                    populateTulipParticles({
+                        startIndex: t * CONFIG.particlesPerTulip,
+                        count: CONFIG.particlesPerTulip,
+                        center: tulip,
+                        scale: tulip.scale,
+                        leanX: tulip.leanX,
+                        leanZ: tulip.leanZ,
+                        rotY: tulip.rotY,
+                        delay: tulip.delay,
+                        isHero: false,
+                        targetPositions, startPositions, partTypes, heightFactors, randomSeeds, tulipDelays, heroFlags
+                    });
+                }
+
+                HERO_POS.y = getTerrainHeight(HERO_POS.x, HERO_POS.z);
+                populateTulipParticles({
+                    startIndex: ambientTotal,
+                    count: CONFIG.heroParticlesCount,
+                    center: HERO_POS,
+                    scale: HERO_SCALE,
+                    leanX: 0.02,
+                    leanZ: 0.03,
+                    rotY: 0.35,
+                    delay: 0.04,
+                    isHero: true,
+                    targetPositions, startPositions, partTypes, heightFactors, randomSeeds, tulipDelays, heroFlags
+                });
+
+                const hitGeo = new THREE.CylinderGeometry(1.55, 1.35, 5.1, 16);
+                const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+                heroHitbox = new THREE.Mesh(hitGeo, hitMat);
+                heroHitbox.position.set(HERO_POS.x, HERO_POS.y + 2.35, HERO_POS.z);
+                scene.add(heroHitbox);
+
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(targetPositions, 3));
+                geometry.setAttribute('aStartPos', new THREE.BufferAttribute(startPositions, 3));
+                geometry.setAttribute('aPartType', new THREE.BufferAttribute(partTypes, 1));
+                geometry.setAttribute('aHeightFactor', new THREE.BufferAttribute(heightFactors, 1));
+                geometry.setAttribute('aSeed', new THREE.BufferAttribute(randomSeeds, 3));
+                geometry.setAttribute('aDelay', new THREE.BufferAttribute(tulipDelays, 1));
+                geometry.setAttribute('aIsHero', new THREE.BufferAttribute(heroFlags, 1));
+
+                uniforms = {
+                    uTime: { value: 0 },
+                    uMorph: { value: 0 },
+                    uAurora: { value: 0 },
+                    uLetterOpen: { value: 0 },
+                    uHeroHover: { value: 0 },
+                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+                    uGlow: { value: CONFIG.glowIntensity },
+                    uTexture: { value: createGlowTexture() },
+                    uColorPetalBase: { value: PALETTE.petalBase.clone() },
+                    uColorPetalTip: { value: PALETTE.petalTip.clone() },
+                    uColorStem: { value: PALETTE.stem.clone() },
+                    uColorSpark: { value: PALETTE.spark.clone() },
+                    uColorHeroBase: { value: PALETTE.heroBase.clone() },
+                    uColorHeroTip: { value: PALETTE.heroTip.clone() },
+                    uCursorPos: { value: new THREE.Vector3(0, -100, 0) },
+                    uCursorEnergy: { value: 0.0 }
+                };
+
+                const material = new THREE.ShaderMaterial({
+                    uniforms: uniforms,
+                    vertexShader: `
+                        attribute vec3 aStartPos;
+                        attribute float aPartType;
+                        attribute float aHeightFactor;
+                        attribute vec3 aSeed;
+                        attribute float aDelay;
+                        attribute float aIsHero;
+
+                        uniform float uTime;
+                        uniform float uMorph;
+                        uniform float uAurora;
+                        uniform float uLetterOpen;
+                        uniform float uHeroHover;
+                        uniform float uPixelRatio;
+                        uniform float uGlow;
+                        uniform vec3 uCursorPos;
+                        uniform float uCursorEnergy;
+
+                        varying vec3 vColor;
+                        varying float vAlpha;
+
+                        uniform vec3 uColorPetalBase;
+                        uniform vec3 uColorPetalTip;
+                        uniform vec3 uColorStem;
+                        uniform vec3 uColorSpark;
+                        uniform vec3 uColorHeroBase;
+                        uniform vec3 uColorHeroTip;
+
+                        float easeInOutCubic(float t) {
+                            return t < 0.5 ? 4.0 * t * t * t : 1.0 - pow(-2.0 * t + 2.0, 3.0) / 2.0;
+                        }
+
+                        void main() {
+                            float localProgress = clamp((uMorph - aDelay * 0.55) / (1.0 - aDelay * 0.55), 0.0, 1.0);
+                            float eased = easeInOutCubic(localProgress);
+
+                            float vortexStrength = sin(eased * 3.14159265);
+                            float spinAngle = vortexStrength * (2.6 + aSeed.x * 2.2) * (aSeed.y > 0.5 ? 1.0 : -1.0);
+
+                            vec3 pos = mix(aStartPos, position, eased);
+
+                            float s = sin(spinAngle);
+                            float c = cos(spinAngle);
+                            vec2 xz = pos.xz;
+                            pos.x = xz.x * c - xz.y * s;
+                            pos.z = xz.x * s + xz.y * c;
+
+                            float spaceFloat = (1.0 - eased);
+                            pos.x += sin(uTime * 0.7 + aSeed.x * 12.0) * 1.4 * spaceFloat;
+                            pos.y += cos(uTime * 0.6 + aSeed.y * 10.0) * 1.1 * spaceFloat;
+                            pos.z += sin(uTime * 0.5 + aSeed.z * 14.0) * 1.4 * spaceFloat;
+
+                            float breezeStrength = eased * (0.25 + aHeightFactor * 0.75);
+                            float windWave = sin(uTime * 1.35 + position.x * 0.45 + position.z * 0.35);
+                            pos.x += windWave * 0.11 * breezeStrength;
+                            pos.z += cos(uTime * 1.1 + position.z * 0.4) * 0.07 * breezeStrength;
+
+                            if (uAurora > 0.01) {
+                                float wavePulse = sin(uTime * 2.2 - length(pos.xz) * 0.45) * 0.5 + 0.5;
+                                pos.y += wavePulse * 0.08 * uAurora * aHeightFactor;
+                            }
+
+                            if (aIsHero > 0.5 && aPartType > 2.5 && eased > 0.8) {
+                                float liftCycle = fract(aSeed.y + uTime * (0.35 + uLetterOpen * 0.28));
+                                pos.y += liftCycle * (1.65 + uLetterOpen * 0.85);
+                                pos.x += sin(uTime * 2.0 + aSeed.x * 10.0) * 0.22 * liftCycle;
+                                pos.z += cos(uTime * 2.0 + aSeed.z * 10.0) * 0.22 * liftCycle;
+                            }
+
+                            vec3 toParticle = pos - uCursorPos;
+                            float distCursor = length(toParticle);
+                            float influenceRadius = 3.8;
+                            if (distCursor < influenceRadius && uCursorEnergy > 0.01) {
+                                float force = pow(1.0 - distCursor / influenceRadius, 2.0) * uCursorEnergy;
+                                vec3 pushDir = normalize(toParticle + vec3(0.0, 0.45, 0.0));
+                                pos += pushDir * force * (0.65 + aHeightFactor * 0.85);
+                                pos.x += -toParticle.z * force * 0.45;
+                                pos.z += toParticle.x * force * 0.45;
+                            }
+
+                            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                            gl_Position = projectionMatrix * mvPosition;
+
+                            float beatWave = sin(uTime * 3.4);
+                            float doubleBeat = pow(max(0.0, sin(uTime * 3.4)), 3.0) + 0.45 * pow(max(0.0, sin(uTime * 3.4 - 0.85)), 4.0);
+                            float heroHeartbeat = clamp(0.35 + 0.65 * doubleBeat + 0.15 * beatWave, 0.0, 1.2);
+                            float heroBeacon = aIsHero * uLetterOpen;
+
+                            vec3 baseCol;
+                            if (aPartType < 0.5) {
+                                baseCol = mix(uColorStem * 0.75, uColorStem * 1.35, aHeightFactor);
+                            } else if (aPartType < 1.5) {
+                                baseCol = mix(uColorStem, uColorPetalTip * 0.9, pow(aHeightFactor, 1.4));
+                            } else if (aPartType < 2.5) {
+                                if (aIsHero > 0.5) {
+                                    baseCol = mix(uColorHeroBase, uColorHeroTip, pow(aHeightFactor, 0.78));
+                                    float goldRim = smoothstep(0.55, 1.0, aHeightFactor);
+                                    baseCol = mix(baseCol, uColorSpark * 1.45, goldRim * (0.58 + 0.32 * heroBeacon));
+                                } else {
+                                    baseCol = mix(uColorPetalBase, uColorPetalTip, pow(aHeightFactor, 0.85));
+                                    float tipSpark = smoothstep(0.78, 1.0, aHeightFactor) * step(0.62, aSeed.z);
+                                    baseCol = mix(baseCol, uColorSpark, tipSpark * 0.8);
+                                }
+                            } else {
+                                baseCol = uColorSpark * 1.55;
+                            }
+
+                            if (uAurora > 0.01) {
+                                float auroraShimmer = sin(uTime * 1.8 + pos.x * 0.3 + pos.z * 0.3) * 0.5 + 0.5;
+                                vec3 auroraTint = mix(vec3(0.35, 0.95, 0.78), vec3(1.0, 0.84, 0.45), auroraShimmer);
+                                baseCol = mix(baseCol, baseCol + auroraTint * 0.42, uAurora * (0.40 + 0.60 * aIsHero));
+                            }
+
+                            if (heroBeacon > 0.01) {
+                                vec3 beaconGlow = mix(vec3(1.0, 0.76, 0.42), vec3(1.0, 0.96, 0.98), heroHeartbeat);
+                                baseCol = baseCol * (1.0 + heroBeacon * (0.65 + 0.75 * heroHeartbeat)) + beaconGlow * (0.42 * heroBeacon * heroHeartbeat);
+                            }
+
+                            vec3 starColor = mix(uColorPetalTip, uColorSpark, aSeed.x);
+                            vColor = mix(starColor * 1.35, baseCol, eased);
+
+                            float twinkle = 0.74 + 0.26 * sin(uTime * (2.5 + aSeed.y * 4.0) + aSeed.x * 25.0);
+                            if (heroBeacon > 0.01) {
+                                float heroBlink = 0.75 + 0.55 * heroHeartbeat;
+                                twinkle = mix(twinkle, heroBlink, heroBeacon);
+                            }
+
+                            float depth = -mvPosition.z;
+                            float focalPlane = 9.5;
+                            float coc = clamp(abs(depth - focalPlane) / 14.5, 0.0, 1.0);
+                            if (aIsHero > 0.5) coc *= 0.10;
+
+                            float heroPulseSize = heroBeacon * (0.45 + 0.42 * heroHeartbeat);
+                            float heroBoost = aIsHero > 0.5 ? (1.36 + 0.16 * sin(uTime * 2.8) + uHeroHover * 0.25 + heroPulseSize) : 1.0;
+                            float auroraBoost = 1.0 + uAurora * 0.18;
+                            float baseSize = (aPartType > 1.5 ? 25.0 : 20.0) * (0.72 + aSeed.z * 0.65) * heroBoost * auroraBoost;
+                            float bokehSize = baseSize * (1.0 + coc * 1.35) * uGlow;
+
+                            gl_PointSize = clamp((bokehSize * uPixelRatio) / max(depth, 0.8), 1.6, 76.0);
+
+                            float depthFade = smoothstep(35.0, 14.0, depth) * smoothstep(0.6, 2.2, depth);
+                            vAlpha = twinkle * depthFade * (1.0 - coc * 0.48) * (0.72 + 0.28 * vortexStrength);
+                            if (aIsHero > 0.5) {
+                                vAlpha = min(1.0, vAlpha * (1.30 + heroBeacon * 0.40));
+                            } else if (uLetterOpen > 0.01) {
+                                vAlpha *= (1.0 - uLetterOpen * 0.18);
+                            }
+                        }
+                    `,
+                    fragmentShader: `
+                        precision highp float;
+                        uniform sampler2D uTexture;
+                        varying vec3 vColor;
+                        varying float vAlpha;
+
+                        void main() {
+                            vec4 texColor = texture2D(uTexture, gl_PointCoord);
+                            if (texColor.a < 0.01) discard;
+                            gl_FragColor = vec4(vColor * texColor.rgb, texColor.a * vAlpha);
+                        }
+                    `,
+                    transparent: true,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                });
+
+                gardenPoints = new THREE.Points(geometry, material);
+                scene.add(gardenPoints);
+            }
+
+            function triggerAuroraAndLetter() {
+                auroraActive = true;
+                letterOpen = true;
+
+                const hintPill = document.getElementById('hint-pill');
+                if (hintPill) hintPill.style.opacity = '0';
+
+                worldCursor.copy(HERO_POS).add(new THREE.Vector3(0, 2.0, 0));
+                cursorEnergy = 2.0;
+
+                const overlay = document.getElementById('letter-overlay');
+                const card = document.getElementById('letter-card');
+                overlay.classList.remove('pointer-events-none');
+                overlay.style.opacity = '1';
+                card.style.transform = 'translateX(0) translateY(0) scale(1)';
+            }
+
+            function closeLetter() {
+                letterOpen = false;
+                auroraActive = false;
+
+                const overlay = document.getElementById('letter-overlay');
+                const card = document.getElementById('letter-card');
+                overlay.style.opacity = '0';
+                overlay.classList.add('pointer-events-none');
+                if (window.innerWidth < 640) {
+                    card.style.transform = 'translateY(32px) scale(0.95)';
+                } else {
+                    card.style.transform = 'translateX(48px) scale(0.95)';
+                }
+            }
+
+            function checkHeroIntersection() {
+                if (!heroHitbox || morphProgress < 0.50) return false;
+                raycaster.setFromCamera(mouseNDC, camera);
+                const intersects = raycaster.intersectObject(heroHitbox, false);
+                return intersects.length > 0;
+            }
+
+            function init() {
+                const container = document.getElementById('canvas-container');
+                clock = new THREE.Clock();
+
+                scene = new THREE.Scene();
+                scene.fog = new THREE.FogExp2(0x03020a, 0.020);
+
+                camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 165);
+                camera.position.copy(currentCamPos);
+
+                renderer = new THREE.WebGLRenderer({
+                    antialias: true,
+                    powerPreference: "high-performance"
+                });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
+
+                buildCosmicAtmosphere();
+                buildTulipGarden();
+                setupEvents();
+            }
+
+            function setupEvents() {
+                const dom = renderer.domElement;
+                const closeBtn = document.getElementById('close-letter-btn');
+                const overlay = document.getElementById('letter-overlay');
+
+                closeBtn.addEventListener('click', closeLetter);
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) closeLetter();
+                });
+
+                function updatePointer(clientX, clientY) {
+                    mouseNDC.x = (clientX / window.innerWidth) * 2 - 1;
+                    mouseNDC.y = -(clientY / window.innerHeight) * 2 + 1;
+
+                    isHoveringHero = checkHeroIntersection();
+                    dom.style.cursor = isHoveringHero ? 'pointer' : 'default';
+
+                    raycaster.setFromCamera(mouseNDC, camera);
+                    const hit = new THREE.Vector3();
+                    if (raycaster.ray.intersectPlane(groundPlane, hit)) {
+                        worldCursor.copy(hit);
+                        worldCursor.y += 1.2;
+                        cursorEnergy = Math.min(1.6, cursorEnergy + 0.35);
+                    }
+                }
+
+                dom.addEventListener('pointerdown', (e) => {
+                    isPointerDown = true;
+                    pointerDownPos.x = e.clientX;
+                    pointerDownPos.y = e.clientY;
+                    lastPointer.x = e.clientX;
+                    lastPointer.y = e.clientY;
+                    updatePointer(e.clientX, e.clientY);
+                });
+
+                window.addEventListener('pointermove', (e) => {
+                    updatePointer(e.clientX, e.clientY);
+
+                    if (isPointerDown) {
+                        const dx = e.clientX - lastPointer.x;
+                        const dy = e.clientY - lastPointer.y;
+                        targetCameraRot.y -= dx * 0.0042;
+                        targetCameraRot.x = Math.max(0.03, Math.min(0.52, targetCameraRot.x + dy * 0.0032));
+                        lastPointer.x = e.clientX;
+                        lastPointer.y = e.clientY;
+                    } else {
+                        targetCameraRot.y = -mouseNDC.x * 0.16;
+                        targetCameraRot.x = 0.14 - mouseNDC.y * 0.07;
+                    }
+                });
+
+                window.addEventListener('pointerup', (e) => {
+                    if (isPointerDown) {
+                        const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+                        updatePointer(e.clientX, e.clientY);
+                        if (moveDist < 14 && checkHeroIntersection()) {
+                            triggerAuroraAndLetter();
+                        }
+                    }
+                    isPointerDown = false;
+                });
+
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    const pr = Math.min(window.devicePixelRatio, 2);
+                    renderer.setPixelRatio(pr);
+                    if (uniforms) uniforms.uPixelRatio.value = pr;
+                    if (stardustUniforms) stardustUniforms.uPixelRatio.value = pr;
+                    if (starsUniforms) starsUniforms.uPixelRatio.value = pr;
+                });
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const delta = Math.min(clock.getDelta(), 0.05);
+                const elapsed = clock.getElapsedTime();
+
+                if (morphProgress < 1.0) {
+                    morphProgress = Math.min(1.0, morphProgress + delta * 0.24 * CONFIG.morphSpeed);
+                }
+
+                if (morphProgress > 0.90 && !hintShown && !letterOpen) {
+                    hintShown = true;
+                    const hintPill = document.getElementById('hint-pill');
+                    if (hintPill) hintPill.style.opacity = '1';
+                }
+
+                const targetAurora = auroraActive ? 1.0 : 0.0;
+                auroraProgress += (targetAurora - auroraProgress) * delta * 1.5;
+
+                const targetLetter = letterOpen ? 1.0 : 0.0;
+                letterProgress += (targetLetter - letterProgress) * delta * 2.6;
+
+                const targetHover = isHoveringHero ? 1.0 : 0.0;
+                heroHover += (targetHover - heroHover) * delta * 6.0;
+
+                smoothCursor.lerp(worldCursor, delta * 8.0);
+                cursorEnergy = Math.max(0.0, cursorEnergy - delta * 1.4);
+
+                uniforms.uTime.value = elapsed;
+                uniforms.uMorph.value = morphProgress;
+                uniforms.uAurora.value = auroraProgress;
+                uniforms.uLetterOpen.value = letterProgress;
+                uniforms.uHeroHover.value = heroHover;
+                uniforms.uCursorPos.value.copy(smoothCursor);
+                uniforms.uCursorEnergy.value = cursorEnergy;
+
+                stardustUniforms.uTime.value = elapsed;
+                stardustUniforms.uAurora.value = auroraProgress;
+
+                starsUniforms.uTime.value = elapsed;
+
+                nebulaUniforms.uTime.value = elapsed;
+                nebulaUniforms.uAurora.value = auroraProgress;
+
+                auroraUniforms.uTime.value = elapsed;
+                auroraUniforms.uAurora.value = auroraProgress;
+
+                currentCameraRot.x += (targetCameraRot.x - currentCameraRot.x) * delta * 3.5;
+                currentCameraRot.y += (targetCameraRot.y - currentCameraRot.y) * delta * 3.5;
+
+                const isMobile = window.innerWidth < 640;
+                const camRadius = isMobile ? 12.8 : 11.4;
+                const swayAmp = 0.07 * (1.0 - letterProgress * 0.75);
+                const autoSway = Math.sin(elapsed * 0.22) * swayAmp;
+                const totalYaw = currentCameraRot.y * (1.0 - letterProgress * 0.68) + autoSway;
+
+                const frameShiftX = letterProgress * (isMobile ? 1.45 : 3.20);
+                const frameShiftY = letterProgress * (isMobile ? -0.45 : 0.05);
+
+                const desiredCamX = Math.sin(totalYaw) * camRadius + frameShiftX * 0.76;
+                const desiredCamZ = Math.cos(totalYaw) * camRadius - 1.2 - letterProgress * 0.55;
+                const desiredCamY = 1.15 + Math.sin(currentCameraRot.x) * 6.0 + frameShiftY;
+
+                currentCamPos.x += (desiredCamX - currentCamPos.x) * delta * 3.2;
+                currentCamPos.y += (desiredCamY - currentCamPos.y) * delta * 3.2;
+                currentCamPos.z += (desiredCamZ - currentCamPos.z) * delta * 3.2;
+
+                const desiredLookAt = new THREE.Vector3(
+                    frameShiftX,
+                    -0.35 + frameShiftY,
+                    -2.5 + letterProgress * 1.5
+                );
+                currentLookAt.lerp(desiredLookAt, delta * 3.4);
+
+                camera.position.copy(currentCamPos);
+                camera.lookAt(currentLookAt);
+
+                renderer.render(scene, camera);
+            }
+
+            window.onload = function () {
+                init();
+                animate();
+            };
+        })();
+    </script>
+</body>
+
+</html>
