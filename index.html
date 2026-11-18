@@ -2,31 +2,33 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Jardín de Tulipanes Cósmico</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
         * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        body,
-        html {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
             width: 100%;
             height: 100%;
+            height: 100dvh;
             overflow: hidden;
-            background-color: #03020a;
+            background: #04030c;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            color: #f8fafc;
+            color: #f8f5ff;
+            user-select: none;
         }
 
         #canvas-container {
@@ -38,1123 +40,2032 @@
             touch-action: none;
         }
 
-        .font-letter-title {
-            font-family: 'Cormorant Garamond', Georgia, serif;
+        #hint-pill {
+            position: fixed;
+            bottom: max(24px, env(safe-area-inset-bottom, 24px));
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            z-index: 10;
+            padding: 10px 20px;
+            border-radius: 999px;
+            background: rgba(16, 12, 34, 0.55);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 196, 232, 0.28);
+            color: rgba(255, 235, 248, 0.9);
+            font-size: clamp(0.78rem, 2.2vw, 0.9rem);
+            letter-spacing: 0.04em;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.1s ease, transform 1.1s ease;
+            white-space: nowrap;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
         }
 
-        .font-letter-body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+        #hint-pill.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
 
-        .letter-glass {
+        #hint-pill.hidden {
+            opacity: 0;
+            transform: translateX(-50%) translateY(12px);
+        }
+
+        #letter-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: clamp(16px, 4vw, 48px);
+        }
+
+        #letter-card {
             position: relative;
-            background: linear-gradient(145deg, rgba(18, 10, 38, 0.78), rgba(10, 8, 24, 0.76) 55%, rgba(6, 22, 30, 0.80));
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 209, 102, 0.28);
+            width: min(460px, 44vw);
+            max-height: 84dvh;
+            overflow-y: auto;
+            padding: clamp(24px, 3.5vw, 38px);
+            border-radius: 26px;
+            background: linear-gradient(145deg, rgba(18, 12, 38, 0.75), rgba(10, 8, 24, 0.88));
+            backdrop-filter: blur(22px) saturate(140%);
+            -webkit-backdrop-filter: blur(22px) saturate(140%);
+            border: 1px solid rgba(255, 210, 235, 0.26);
             box-shadow:
-                0 28px 70px rgba(0, 0, 0, 0.82),
-                0 0 55px rgba(236, 72, 153, 0.22),
-                0 0 85px rgba(52, 211, 153, 0.14),
-                inset 0 1px 1px rgba(255, 255, 255, 0.18),
-                inset 0 0 28px rgba(167, 243, 208, 0.08);
+                0 25px 60px rgba(0, 0, 0, 0.65),
+                0 0 40px rgba(236, 72, 153, 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.18);
+            opacity: 0;
+            transform: translateX(48px) scale(0.96);
+            transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 182, 222, 0.3) transparent;
         }
 
-        .letter-glass::before {
+        #letter-card::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        #letter-card::-webkit-scrollbar-thumb {
+            background: rgba(255, 182, 222, 0.3);
+            border-radius: 999px;
+        }
+
+        #letter-card::before {
             content: "";
             position: absolute;
-            inset: -1px;
-            border-radius: inherit;
+            inset: 0;
+            border-radius: 26px;
             padding: 1px;
-            background: linear-gradient(135deg, rgba(255, 209, 102, 0.60), rgba(236, 72, 153, 0.38), rgba(52, 211, 153, 0.50));
+            background: linear-gradient(135deg, rgba(255, 214, 138, 0.55), rgba(244, 114, 182, 0.45), rgba(52, 211, 153, 0.45));
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor;
             mask-composite: exclude;
             pointer-events: none;
         }
 
-        .letter-scroll::-webkit-scrollbar {
-            width: 4px;
+        #letter-card.open {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            pointer-events: auto;
         }
 
-        .letter-scroll::-webkit-scrollbar-track {
-            background: transparent;
+        #close-letter {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 235, 248, 0.85);
+            font-size: 1.1rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.25s ease, transform 0.25s ease;
         }
 
-        .letter-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 209, 102, 0.28);
+        #close-letter:hover {
+            background: rgba(244, 114, 182, 0.25);
+            transform: scale(1.08);
+        }
+
+        .letter-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: #fcd34d;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        #letter-content h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.5rem, 2.7vw, 2.1rem);
+            font-weight: 600;
+            line-height: 1.18;
+            margin-bottom: 14px;
+            background: linear-gradient(120deg, #fff5fa 0%, #fbcfe8 55%, #fde68a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .star-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            opacity: 0.65;
+        }
+
+        .star-divider span {
+            height: 1px;
+            flex: 1;
+            background: linear-gradient(90deg, rgba(252, 211, 77, 0.6), rgba(244, 114, 182, 0.2), transparent);
+        }
+
+        .star-divider i {
+            font-style: normal;
+            color: #fde68a;
+            font-size: 0.85rem;
+        }
+
+        #letter-content p {
+            font-size: clamp(0.9rem, 1.3vw, 1.02rem);
+            line-height: 1.7;
+            color: rgba(245, 238, 255, 0.9);
+            font-weight: 300;
+            margin-bottom: 14px;
+        }
+
+        #start-game-btn {
+            margin-top: 8px;
+            width: 100%;
+            padding: 13px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(253, 224, 71, 0.42);
+            background: linear-gradient(135deg, rgba(244, 114, 182, 0.26), rgba(52, 211, 153, 0.22));
+            color: #fff7ed;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            box-shadow: 0 8px 24px rgba(236, 72, 153, 0.18);
+        }
+
+        #start-game-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(244, 114, 182, 0.38), rgba(52, 211, 153, 0.32));
+            box-shadow: 0 12px 28px rgba(236, 72, 153, 0.28);
+        }
+
+        #game-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 30;
+            background: rgba(5, 3, 16, 0.72);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: max(12px, env(safe-area-inset-top, 12px)) 12px max(12px, env(safe-area-inset-bottom, 12px));
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.55s ease;
+        }
+
+        #game-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #game-hud {
+            width: min(860px, 96vw);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .hud-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .sun-counter {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            background: rgba(24, 18, 48, 0.85);
+            border: 1px solid rgba(253, 224, 71, 0.45);
+            color: #fde047;
+            font-weight: 700;
+            font-size: 0.96rem;
+            box-shadow: 0 4px 16px rgba(250, 204, 21, 0.15);
+        }
+
+        .plant-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 68px;
+            padding: 4px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(30, 24, 58, 0.9), rgba(18, 14, 38, 0.92));
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            color: #fef08a;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+        }
+
+        .plant-card canvas {
+            width: 44px;
+            height: 44px;
+            pointer-events: none;
+        }
+
+        .plant-cost {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #fde047;
+            line-height: 1;
+            margin-top: 1px;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .plant-card.selected {
+            border-color: #fde047;
+            background: linear-gradient(180deg, rgba(250, 204, 21, 0.24), rgba(34, 197, 94, 0.18));
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 0 18px rgba(250, 204, 21, 0.32);
+        }
+
+        .plant-card.disabled {
+            opacity: 0.42;
+        }
+
+        .score-pill {
+            padding: 8px 12px;
+            border-radius: 14px;
+            background: rgba(20, 15, 42, 0.78);
+            border: 1px solid rgba(244, 114, 182, 0.32);
+            color: #fbcfe8;
+            font-size: 0.8rem;
+        }
+
+        .coca-pill {
+            padding: 8px 12px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(185, 28, 28, 0.45), rgba(30, 15, 38, 0.85));
+            border: 1px solid rgba(248, 113, 113, 0.55);
+            color: #fecaca;
+            font-size: 0.82rem;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+            transition: transform 0.25s ease;
+        }
+
+        .coca-pill.pop {
+            transform: scale(1.16);
+        }
+
+        #exit-game-btn {
+            padding: 8px 13px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+            color: #f8f5ff;
+            font-family: inherit;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        #exit-game-btn:hover {
+            background: rgba(244, 114, 182, 0.28);
+        }
+
+        #canvas-wrap {
+            position: relative;
+            width: min(860px, 96vw);
+            display: flex;
+            justify-content: center;
+        }
+
+        #pvz-canvas {
+            width: 100%;
+            height: min(460px, 64dvh);
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(14, 10, 32, 0.88) 0%, rgba(10, 18, 28, 0.92) 100%);
+            border: 1px solid rgba(255, 200, 235, 0.26);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 36px rgba(52, 211, 153, 0.14);
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        #coca-toast {
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-16px) scale(0.92);
+            padding: 12px 22px;
             border-radius: 999px;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.92), rgba(127, 29, 29, 0.95));
+            border: 1px solid rgba(254, 202, 202, 0.75);
+            color: #fff;
+            font-weight: 600;
+            font-size: clamp(0.8rem, 2.3vw, 0.95rem);
+            box-shadow: 0 12px 32px rgba(220, 38, 38, 0.48), 0 0 24px rgba(253, 224, 71, 0.35);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            white-space: nowrap;
+            z-index: 5;
+        }
+
+        #coca-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0) scale(1);
+        }
+
+        #victory-modal {
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            background: rgba(10, 6, 26, 0.84);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 8;
+        }
+
+        #victory-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #victory-modal h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            background: linear-gradient(120deg, #fff5fa, #fde68a, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        #victory-modal p {
+            max-width: 440px;
+            font-size: clamp(0.9rem, 2.2vw, 1.02rem);
+            line-height: 1.6;
+            color: rgba(245, 238, 255, 0.9);
+            margin-bottom: 20px;
+        }
+
+        .victory-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .victory-btn {
+            padding: 11px 20px;
+            border-radius: 14px;
+            border: 1px solid rgba(253, 224, 71, 0.45);
+            background: linear-gradient(135deg, rgba(244, 114, 182, 0.3), rgba(52, 211, 153, 0.25));
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .victory-btn.secondary {
+            border-color: rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .victory-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        #game-tip {
+            margin-top: 8px;
+            font-size: 0.78rem;
+            color: rgba(245, 238, 255, 0.75);
+            text-align: center;
+        }
+
+        @media (max-width: 860px) and (orientation: portrait) {
+            #letter-overlay {
+                align-items: flex-end;
+                justify-content: center;
+                padding: 16px 14px max(18px, env(safe-area-inset-bottom, 18px));
+            }
+
+            #letter-card {
+                width: 100%;
+                max-width: 520px;
+                max-height: 48dvh;
+                padding: 20px 18px 22px;
+                border-radius: 24px;
+                transform: translateY(44px) scale(0.97);
+            }
+
+            #letter-card.open {
+                transform: translateY(0) scale(1);
+            }
+
+            #letter-content h2 {
+                font-size: 1.4rem;
+                padding-right: 28px;
+            }
+
+            #letter-content p {
+                font-size: 0.88rem;
+                line-height: 1.58;
+            }
+
+            #pvz-canvas {
+                height: min(410px, 56dvh);
+            }
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            #letter-overlay {
+                padding: 12px 20px;
+            }
+
+            #letter-card {
+                width: min(440px, 52vw);
+                max-height: 88dvh;
+                padding: 16px 18px;
+            }
+
+            #letter-content h2 {
+                font-size: 1.32rem;
+                margin-bottom: 8px;
+            }
+
+            .star-divider {
+                margin-bottom: 10px;
+            }
+
+            #letter-content p {
+                font-size: 0.84rem;
+                line-height: 1.5;
+                margin-bottom: 10px;
+            }
+
+            #pvz-canvas {
+                height: 68dvh;
+            }
         }
     </style>
 </head>
 
 <body>
-
     <div id="canvas-container"></div>
 
-    <div id="hint-pill"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none opacity-0 transition-opacity duration-1000">
-        <div
-            class="px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-xs sm:text-sm text-pink-100/85 tracking-wide flex items-center gap-2 shadow-lg">
-            <span class="w-2 h-2 rounded-full bg-amber-300 animate-ping"></span>
-            <span>Toca el tulipán central</span>
-        </div>
-    </div>
+    <div id="hint-pill">Toca el tulipán brillante del centro</div>
 
-    <div id="letter-overlay"
-        class="fixed inset-0 z-30 flex items-end sm:items-center justify-end p-4 sm:p-0 opacity-0 pointer-events-none transition-opacity duration-700 ease-out">
-        <div id="letter-card"
-            class="letter-glass relative w-full max-w-[440px] sm:mr-[5%] rounded-3xl p-6 sm:p-9 transform translate-y-8 sm:translate-y-0 sm:translate-x-12 scale-95 transition-all duration-700 ease-out">
-
-            <button id="close-letter-btn" aria-label="Cerrar carta"
-                class="absolute top-4 right-4 sm:top-5 sm:right-5 w-9 h-9 rounded-full bg-white/5 hover:bg-white/15 border border-white/15 flex items-center justify-center text-white/75 hover:text-white transition-all active:scale-90 cursor-pointer">
-                <span class="text-xl leading-none font-light">&times;</span>
-            </button>
-
-            <div class="flex items-center gap-2.5 mb-3">
-                <span class="h-[1px] w-7 bg-gradient-to-r from-transparent to-amber-300/80"></span>
-                <span class="text-amber-200/90 text-[11px] tracking-[0.24em] uppercase font-medium">Un respiro para
-                    ti</span>
-                <span class="text-amber-300 text-xs">✦</span>
-            </div>
-
-            <div id="letter-content" class="letter-scroll max-h-[62vh] sm:max-h-[68vh] overflow-y-auto pr-1">
-                <h2
-                    class="font-letter-title text-2xl sm:text-[31px] font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-pink-200 to-emerald-200 mb-4 leading-tight">
-                    Pausa obligatoria entre tanto ruido
-                </h2>
-
-                <div class="flex items-center gap-3 mb-5 opacity-75">
-                    <span
-                        class="h-[1px] flex-1 bg-gradient-to-r from-amber-300/40 via-pink-300/30 to-transparent"></span>
-                    <span class="text-pink-200/80 text-xs tracking-widest">✧ ❀ ✧</span>
-                    <span
-                        class="h-[1px] flex-1 bg-gradient-to-l from-emerald-300/40 via-pink-300/30 to-transparent"></span>
-                </div>
-
-                <div
-                    class="space-y-4 font-letter-body text-[14.5px] sm:text-[15.5px] text-slate-100/90 leading-[1.75] font-light">
-                    <p>
-                        Si llegaste hasta aquí, es señal de que necesitas detenerte un segundo, tomar aire y dejar de
-                        pensar en todo lo que falta por hacer. A veces los días se sienten como un torbellino lleno de
-                        prisa, pero hasta el caos más grande termina encontrando su forma y su calma, igual que este
-                        jardín.
-                    </p>
-                    <p>
-                        Estás haciendo un gran esfuerzo y se nota muchísimo. Suelta los hombros, date permiso de
-                        simplemente estar aquí y no te exijas de más hoy. Todo va a salir bien, paso a paso, y aquí
-                        tienes este rincón tranquilo siempre que necesites escapar un rato.
-                    </p>
-                </div>
-            </div>
-
-            <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
-                <span class="text-xs text-pink-200/65 font-light tracking-wide">Respira hondo</span>
-                <span class="font-letter-title italic text-lg text-amber-200/95">Aquí estoy contigo. Te quiere N</span>
+    <div id="letter-overlay">
+        <div id="letter-card">
+            <button id="close-letter" aria-label="Cerrar carta">×</button>
+            <span class="letter-tag">Para ti</span>
+            <div id="letter-content">
+                <h2>Pausa obligatoria entre tanto ruido</h2>
+                <div class="star-divider"><i>✦</i><span></span></div>
+                <p>Si llegaste hasta aquí, es señal de que necesitas detenerte un segundo, tomar aire y dejar de pensar
+                    en todo lo que falta por hacer. A veces los días se sienten como un torbellino lleno de prisa, pero
+                    hasta el caos más grande termina encontrando su forma y su calma, igual que este jardín.</p>
+                <p>Estás haciendo un gran esfuerzo y se nota muchísimo. Suelta los hombros, date permiso de simplemente
+                    estar aquí y no te exijas de más hoy. Todo va a salir bien, paso a paso, y aquí tienes este rincón
+                    tranquilo siempre que necesites escapar un rato.</p>
+                <button id="start-game-btn">✦ Despejar la mente (Mini-juego)</button>
             </div>
         </div>
     </div>
 
+    <div id="game-overlay">
+        <div id="game-hud">
+            <div class="hud-group">
+                <div class="sun-counter">☀️ <span id="sun-amount">125</span></div>
+                <button class="plant-card selected" data-plant="sunflower" data-cost="50" aria-label="Girasol">
+                    <canvas id="icon-sunflower" width="88" height="88"></canvas>
+                    <span class="plant-cost">50</span>
+                </button>
+                <button class="plant-card" data-plant="peashooter" data-cost="100" aria-label="Lanzaguisantes">
+                    <canvas id="icon-peashooter" width="88" height="88"></canvas>
+                    <span class="plant-cost">100</span>
+                </button>
+                <button class="plant-card" data-plant="wallnut" data-cost="50" aria-label="Papa">
+                    <canvas id="icon-wallnut" width="88" height="88"></canvas>
+                    <span class="plant-cost">50</span>
+                </button>
+            </div>
+            <div class="hud-group">
+                <div class="score-pill">Puntos: <strong id="score-count">0</strong> / 5,000</div>
+                <div class="coca-pill" id="coca-badge">🥤 Coca-Colas: <strong id="coca-count">0</strong></div>
+                <button id="exit-game-btn">Volver al jardín</button>
+            </div>
+        </div>
+        <div id="canvas-wrap">
+            <div id="coca-toast">🥤 ¡Ganaste 1 Coca-Cola y subió la oleada!</div>
+            <div id="victory-modal">
+                <h3>✦ ¡Mente despejada y jardín a salvo! ✦</h3>
+                <p>Llegaste a los <strong>5,000 puntos</strong> y desbloqueaste <strong>5 Coca-Colas</strong> bien frías
+                    canjeables en la vida real. ¡Ahora sí, a respirar tranquilo!</p>
+                <div class="victory-actions">
+                    <button class="victory-btn" id="play-again-btn">Jugar otra ronda</button>
+                    <button class="victory-btn secondary" id="victory-garden-btn">Volver al jardín</button>
+                </div>
+            </div>
+            <canvas id="pvz-canvas" width="860" height="460"></canvas>
+        </div>
+        <div id="game-tip">+100 pts por zombie · Cada 1,000 pts ganas 1 Coca-Cola y los zombies tienen más vida · Meta:
+            5,000 pts</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        (function () {
-            const CONFIG = {
-                tulipCount: 135,
-                particlesPerTulip: 330,
-                heroParticlesCount: 2450,
-                stardustCount: 9500,
-                bgStarsCount: 3500,
-                morphSpeed: 1.15,
-                glowIntensity: 1.55
-            };
+        const container = document.getElementById('canvas-container');
+        const hintPill = document.getElementById('hint-pill');
+        const letterCard = document.getElementById('letter-card');
+        const closeLetterBtn = document.getElementById('close-letter');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const gameOverlay = document.getElementById('game-overlay');
+        const exitGameBtn = document.getElementById('exit-game-btn');
 
-            const PALETTE = {
-                petalBase: new THREE.Color(0xc026d3),
-                petalTip: new THREE.Color(0xff7eb6),
-                stem: new THREE.Color(0x6d28d9),
-                spark: new THREE.Color(0xffd166),
-                heroBase: new THREE.Color(0xf43f5e),
-                heroTip: new THREE.Color(0xffe4e6)
-            };
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 860;
+        const isPortrait = () => window.innerHeight > window.innerWidth;
 
-            let scene, camera, renderer, clock;
-            let gardenPoints, stardustPoints, bgStarsPoints, nebulaMesh, auroraSkyMesh, auroraCurtainMesh;
-            let heroHitbox;
-            let uniforms, stardustUniforms, starsUniforms, nebulaUniforms, auroraUniforms;
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050311, 0.016);
 
-            let morphProgress = 0.0;
-            let auroraProgress = 0.0;
-            let auroraActive = false;
-            let letterOpen = false;
-            let letterProgress = 0.0;
-            let heroHover = 0.0;
-            let isHoveringHero = false;
-            let hintShown = false;
+        const camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 240);
+        const defaultCamPos = new THREE.Vector3(0, 7.6, 25.5);
+        const defaultLookAt = new THREE.Vector3(0, 3.1, 0);
+        camera.position.copy(defaultCamPos);
 
-            const HERO_POS = new THREE.Vector3(0.0, -2.05, 1.5);
-            const HERO_SCALE = 1.52;
+        const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.75 : 2));
+        renderer.setClearColor(0x04030c, 1);
+        container.appendChild(renderer.domElement);
 
-            let mouseNDC = new THREE.Vector2(999, 999);
-            let targetCameraRot = { x: 0.13, y: 0.0 };
-            let currentCameraRot = { x: 0.13, y: 0.0 };
-            let isPointerDown = false;
-            let pointerDownPos = { x: 0, y: 0 };
-            let lastPointer = { x: 0, y: 0 };
+        function createGlowTexture() {
+            const c = document.createElement('canvas');
+            c.width = 128;
+            c.height = 128;
+            const ctx = c.getContext('2d');
+            const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+            grad.addColorStop(0.22, 'rgba(255, 245, 252, 0.88)');
+            grad.addColorStop(0.5, 'rgba(255, 190, 230, 0.35)');
+            grad.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+            const tex = new THREE.CanvasTexture(c);
+            tex.needsUpdate = true;
+            return tex;
+        }
 
-            let currentLookAt = new THREE.Vector3(0, -0.35, -2.5);
-            let currentCamPos = new THREE.Vector3(0, 1.8, 12.2);
+        const glowTexture = createGlowTexture();
 
-            let raycaster = new THREE.Raycaster();
-            let groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 1.5);
-            let worldCursor = new THREE.Vector3(0, -100, 0);
-            let smoothCursor = new THREE.Vector3(0, -100, 0);
-            let cursorEnergy = 0.0;
+        const tulipCount = isMobile ? 95 : 135;
+        const particlesPerTulip = isMobile ? 380 : 480;
+        const heroExtraParticles = 80;
+        const ambientCount = isMobile ? 2500 : 4500;
+        const totalParticles = tulipCount * particlesPerTulip + heroExtraParticles + ambientCount;
 
-            function createGlowTexture() {
-                const canvas = document.createElement('canvas');
-                canvas.width = 128;
-                canvas.height = 128;
-                const ctx = canvas.getContext('2d');
+        const startPositions = new Float32Array(totalParticles * 3);
+        const targetPositions = new Float32Array(totalParticles * 3);
+        const colors = new Float32Array(totalParticles * 3);
+        const sizes = new Float32Array(totalParticles);
+        const phases = new Float32Array(totalParticles);
+        const delays = new Float32Array(totalParticles);
+        const isHeroAttr = new Float32Array(totalParticles);
+        const partTypeAttr = new Float32Array(totalParticles);
 
-                const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-                gradient.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
-                gradient.addColorStop(0.18, 'rgba(255, 245, 255, 0.94)');
-                gradient.addColorStop(0.45, 'rgba(255, 220, 245, 0.42)');
-                gradient.addColorStop(0.75, 'rgba(220, 180, 255, 0.12)');
-                gradient.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
+        const heroWorldPos = new THREE.Vector3(0, 0, 6.2);
 
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 128, 128);
+        const tulipConfigs = [];
+        tulipConfigs.push({
+            x: heroWorldPos.x,
+            z: heroWorldPos.z,
+            scale: 1.54,
+            height: 5.3,
+            hueShift: 0,
+            isHero: true
+        });
 
-                return new THREE.CanvasTexture(canvas);
+        for (let i = 1; i < tulipCount; i++) {
+            const ring = Math.pow(i / tulipCount, 0.62);
+            const angle = i * 2.3999632;
+            const radius = 2.8 + ring * 23.0;
+            const x = Math.cos(angle) * radius + (Math.random() - 0.5) * 1.4;
+            const z = Math.sin(angle) * radius * 0.82 - 2.0 + (Math.random() - 0.5) * 1.4;
+
+            if (Math.hypot(x - heroWorldPos.x, z - heroWorldPos.z) < 2.5) continue;
+
+            tulipConfigs.push({
+                x,
+                z,
+                scale: 0.78 + Math.random() * 0.52,
+                height: 3.2 + Math.random() * 1.8,
+                hueShift: (Math.random() - 0.5) * 0.14,
+                isHero: false
+            });
+        }
+
+        const cStem = new THREE.Color();
+        const cPetalBase = new THREE.Color();
+        const cPetalTip = new THREE.Color();
+        const cGold = new THREE.Color(0xffdf78);
+        const tempColor = new THREE.Color();
+
+        let idx = 0;
+
+        for (let t = 0; t < tulipConfigs.length; t++) {
+            const cfg = tulipConfigs[t];
+            const distFromHero = Math.hypot(cfg.x - heroWorldPos.x, cfg.z - heroWorldPos.z);
+            const baseDelay = cfg.isHero ? 0.02 : Math.min(0.45, distFromHero * 0.016 + Math.random() * 0.08);
+            const currentParticlesForTulip = cfg.isHero ? (particlesPerTulip + heroExtraParticles) : particlesPerTulip;
+
+            if (cfg.isHero) {
+                cStem.setHSL(0.43, 0.88, 0.54);
+                cPetalBase.setHSL(0.93, 0.96, 0.64);
+                cPetalTip.setHSL(0.11, 1.0, 0.82);
+            } else {
+                cStem.setHSL(0.42 + Math.random() * 0.06, 0.78, 0.36 + Math.random() * 0.1);
+                cPetalBase.setHSL((0.91 + cfg.hueShift + 1.0) % 1.0, 0.88, 0.52);
+                cPetalTip.setHSL((0.96 + cfg.hueShift + 1.0) % 1.0, 0.95, 0.72);
             }
 
-            function getTerrainHeight(x, z) {
-                return Math.sin(x * 0.14) * 0.60 + Math.cos(z * 0.12) * 0.50 - 2.35;
-            }
+            const stemCount = Math.floor(currentParticlesForTulip * 0.24);
+            const leafCount = Math.floor(currentParticlesForTulip * 0.22);
 
-            function buildCosmicAtmosphere() {
-                const glowTex = createGlowTexture();
+            for (let p = 0; p < currentParticlesForTulip; p++) {
+                if (idx >= totalParticles - ambientCount) break;
 
-                nebulaUniforms = {
-                    uTime: { value: 0 },
-                    uAurora: { value: 0 }
-                };
+                let tx = 0, ty = 0, tz = 0;
+                let pType = 1.0;
 
-                const skyGeo = new THREE.SphereGeometry(95, 32, 32);
-                const skyMat = new THREE.ShaderMaterial({
-                    uniforms: nebulaUniforms,
-                    side: THREE.BackSide,
-                    depthWrite: false,
-                    vertexShader: `
-                        varying vec3 vWorldPos;
-                        void main() {
-                            vec4 wp = modelMatrix * vec4(position, 1.0);
-                            vWorldPos = wp.xyz;
-                            gl_Position = projectionMatrix * viewMatrix * wp;
-                        }
-                    `,
-                    fragmentShader: `
-                        precision highp float;
-                        uniform float uTime;
-                        uniform float uAurora;
-                        varying vec3 vWorldPos;
-
-                        float hash(vec2 p) {
-                            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-                        }
-
-                        float noise(vec2 p) {
-                            vec2 i = floor(p);
-                            vec2 f = fract(p);
-                            vec2 u = f * f * (3.0 - 2.0 * f);
-                            return mix(
-                                mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
-                                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
-                                u.y
-                            );
-                        }
-
-                        float fbm(vec2 p) {
-                            float v = 0.0;
-                            float a = 0.5;
-                            for (int i = 0; i < 4; i++) {
-                                v += a * noise(p);
-                                p *= 2.04;
-                                a *= 0.5;
-                            }
-                            return v;
-                        }
-
-                        void main() {
-                            vec3 dir = normalize(vWorldPos);
-                            float up = clamp(dir.y * 0.5 + 0.5, 0.0, 1.0);
-
-                            vec2 uv = dir.xz / (abs(dir.y) + 0.35) * 1.4;
-                            float n1 = fbm(uv + vec2(uTime * 0.015, -uTime * 0.01));
-                            float n2 = fbm(uv * 1.8 - vec2(uTime * 0.02, uTime * 0.015));
-
-                            vec3 deepSpace = vec3(0.012, 0.008, 0.039);
-                            vec3 violetNebula = vec3(0.14, 0.04, 0.28);
-                            vec3 magentaNebula = vec3(0.32, 0.05, 0.22);
-                            vec3 horizonGlow = vec3(0.08, 0.03, 0.16);
-
-                            vec3 col = mix(horizonGlow, deepSpace, smoothstep(0.35, 0.92, up));
-                            col += violetNebula * smoothstep(0.35, 0.85, n1) * 0.55;
-                            col += magentaNebula * smoothstep(0.45, 0.90, n2) * 0.42;
-
-                            if (uAurora > 0.001) {
-                                vec3 auroraSkyGlow = mix(vec3(0.04, 0.35, 0.28), vec3(0.26, 0.08, 0.38), n2);
-                                col += auroraSkyGlow * uAurora * 0.48 * smoothstep(0.35, 0.88, up);
-                            }
-
-                            gl_FragColor = vec4(col, 1.0);
-                        }
-                    `
-                });
-                nebulaMesh = new THREE.Mesh(skyGeo, skyMat);
-                scene.add(nebulaMesh);
-
-                auroraUniforms = {
-                    uTime: { value: 0 },
-                    uAurora: { value: 0 }
-                };
-
-                const auroraSkyGeo = new THREE.CylinderGeometry(36, 44, 26, 64, 1, true);
-                const auroraMat = new THREE.ShaderMaterial({
-                    uniforms: auroraUniforms,
-                    transparent: true,
-                    depthWrite: false,
-                    side: THREE.DoubleSide,
-                    blending: THREE.AdditiveBlending,
-                    vertexShader: `
-                        varying vec2 vUv;
-                        varying vec3 vPos;
-                        void main() {
-                            vUv = uv;
-                            vPos = position;
-                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                        }
-                    `,
-                    fragmentShader: `
-                        precision highp float;
-                        uniform float uTime;
-                        uniform float uAurora;
-                        varying vec2 vUv;
-                        varying vec3 vPos;
-
-                        void main() {
-                            if (uAurora <= 0.001) discard;
-
-                            float angle = vUv.x * 6.2831853;
-                            float h = vUv.y;
-
-                            float wave1 = sin(angle * 3.0 + uTime * 0.65 + sin(angle * 2.0 - uTime * 0.4) * 1.4);
-                            float wave2 = cos(angle * 5.0 - uTime * 0.50 + h * 3.0);
-                            float wave3 = sin(angle * 8.0 + uTime * 0.95);
-
-                            float ribbon = smoothstep(0.05, 0.92, wave1 * 0.5 + 0.5) * (0.55 + 0.45 * wave2);
-                            float rays = 0.65 + 0.35 * sin(angle * 28.0 + uTime * 1.6 + wave1 * 3.0) * wave3;
-
-                            float verticalMask = smoothstep(0.0, 0.26, h) * smoothstep(1.0, 0.32, h);
-                            float intensity = ribbon * rays * verticalMask * uAurora;
-
-                            vec3 emerald = vec3(0.10, 0.95, 0.66);
-                            vec3 violet = vec3(0.56, 0.24, 0.96);
-                            vec3 magenta = vec3(0.95, 0.25, 0.68);
-                            vec3 gold = vec3(1.0, 0.84, 0.42);
-
-                            vec3 col = mix(emerald, violet, smoothstep(0.15, 0.72, h));
-                            col = mix(col, magenta, smoothstep(0.55, 0.95, h) * 0.75);
-                            col += gold * smoothstep(0.06, 0.24, h) * smoothstep(0.38, 0.14, h) * 0.65;
-
-                            gl_FragColor = vec4(col * intensity * 1.25, clamp(intensity * 0.82, 0.0, 1.0));
-                        }
-                    `
-                });
-                auroraSkyMesh = new THREE.Mesh(auroraSkyGeo, auroraMat);
-                auroraSkyMesh.position.set(0, 10.5, -8.0);
-                scene.add(auroraSkyMesh);
-
-                const curtainGeo = new THREE.CylinderGeometry(16, 22, 13, 64, 1, true);
-                auroraCurtainMesh = new THREE.Mesh(curtainGeo, auroraMat);
-                auroraCurtainMesh.position.set(0, 3.8, -2.0);
-                auroraCurtainMesh.rotation.y = 1.2;
-                scene.add(auroraCurtainMesh);
-
-                const starPositions = new Float32Array(CONFIG.bgStarsCount * 3);
-                const starSeeds = new Float32Array(CONFIG.bgStarsCount * 3);
-                for (let i = 0; i < CONFIG.bgStarsCount; i++) {
-                    const i3 = i * 3;
+                if (p < stemCount) {
+                    const u = p / stemCount;
+                    const bend = Math.sin(u * Math.PI) * 0.18 * cfg.scale;
                     const theta = Math.random() * Math.PI * 2;
-                    const phi = Math.acos(Math.random() * 0.92 + 0.04);
-                    const r = 48 + Math.random() * 36;
-
-                    starPositions[i3] = r * Math.sin(phi) * Math.cos(theta);
-                    starPositions[i3 + 1] = r * Math.cos(phi) - 3.0;
-                    starPositions[i3 + 2] = r * Math.sin(phi) * Math.sin(theta);
-
-                    starSeeds[i3] = Math.random();
-                    starSeeds[i3 + 1] = Math.random();
-                    starSeeds[i3 + 2] = Math.random();
-                }
-
-                const starsGeo = new THREE.BufferGeometry();
-                starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-                starsGeo.setAttribute('aSeed', new THREE.BufferAttribute(starSeeds, 3));
-
-                starsUniforms = {
-                    uTime: { value: 0 },
-                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
-                    uTexture: { value: glowTex }
-                };
-
-                const starsMat = new THREE.ShaderMaterial({
-                    uniforms: starsUniforms,
-                    transparent: true,
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending,
-                    vertexShader: `
-                        attribute vec3 aSeed;
-                        uniform float uTime;
-                        uniform float uPixelRatio;
-                        varying float vAlpha;
-                        varying vec3 vColor;
-
-                        void main() {
-                            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                            gl_Position = projectionMatrix * mvPosition;
-
-                            float twinkle = 0.45 + 0.55 * sin(uTime * (1.2 + aSeed.x * 3.2) + aSeed.y * 40.0);
-                            vAlpha = twinkle * (0.45 + 0.55 * aSeed.z);
-
-                            vec3 c1 = vec3(0.85, 0.90, 1.0);
-                            vec3 c2 = vec3(1.0, 0.86, 0.68);
-                            vec3 c3 = vec3(0.96, 0.72, 0.92);
-                            vColor = mix(mix(c1, c2, aSeed.x), c3, step(0.75, aSeed.y) * 0.6);
-
-                            gl_PointSize = clamp((10.0 + aSeed.z * 16.0) * uPixelRatio * (35.0 / max(-mvPosition.z, 10.0)), 1.2, 8.0);
-                        }
-                    `,
-                    fragmentShader: `
-                        precision highp float;
-                        uniform sampler2D uTexture;
-                        varying float vAlpha;
-                        varying vec3 vColor;
-
-                        void main() {
-                            vec4 tex = texture2D(uTexture, gl_PointCoord);
-                            if (tex.a < 0.01) discard;
-                            gl_FragColor = vec4(vColor * tex.rgb, tex.a * vAlpha);
-                        }
-                    `
-                });
-
-                bgStarsPoints = new THREE.Points(starsGeo, starsMat);
-                scene.add(bgStarsPoints);
-
-                const dustPositions = new Float32Array(CONFIG.stardustCount * 3);
-                const dustSeeds = new Float32Array(CONFIG.stardustCount * 3);
-                for (let i = 0; i < CONFIG.stardustCount; i++) {
-                    const i3 = i * 3;
-                    dustPositions[i3] = (Math.random() - 0.5) * 44.0;
-                    dustPositions[i3 + 1] = -2.0 + Math.random() * 19.0;
-                    dustPositions[i3 + 2] = -22.0 + Math.random() * 34.0;
-
-                    dustSeeds[i3] = Math.random();
-                    dustSeeds[i3 + 1] = Math.random();
-                    dustSeeds[i3 + 2] = Math.random();
-                }
-
-                const dustGeo = new THREE.BufferGeometry();
-                dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
-                dustGeo.setAttribute('aSeed', new THREE.BufferAttribute(dustSeeds, 3));
-
-                stardustUniforms = {
-                    uTime: { value: 0 },
-                    uAurora: { value: 0 },
-                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
-                    uTexture: { value: glowTex }
-                };
-
-                const dustMat = new THREE.ShaderMaterial({
-                    uniforms: stardustUniforms,
-                    transparent: true,
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending,
-                    vertexShader: `
-                        attribute vec3 aSeed;
-                        uniform float uTime;
-                        uniform float uAurora;
-                        uniform float uPixelRatio;
-                        varying float vAlpha;
-                        varying vec3 vColor;
-
-                        void main() {
-                            vec3 pos = position;
-                            float cycle = fract(aSeed.y + uTime * (0.03 + aSeed.x * 0.04));
-                            pos.y = -2.2 + cycle * 18.0;
-                            pos.x += sin(uTime * 0.45 + aSeed.z * 20.0) * 1.1;
-                            pos.z += cos(uTime * 0.40 + aSeed.x * 20.0) * 1.1;
-
-                            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                            gl_Position = projectionMatrix * mvPosition;
-
-                            float depth = max(-mvPosition.z, 1.0);
-                            float fadeEdges = smoothstep(0.0, 0.15, cycle) * smoothstep(1.0, 0.78, cycle);
-                            float twinkle = 0.55 + 0.45 * sin(uTime * (2.0 + aSeed.x * 3.5) + aSeed.y * 30.0);
-
-                            vAlpha = fadeEdges * twinkle * smoothstep(36.0, 8.0, depth) * (0.65 + 0.35 * uAurora);
-
-                            vec3 gold = vec3(1.0, 0.84, 0.46);
-                            vec3 pink = vec3(1.0, 0.48, 0.78);
-                            vec3 emerald = vec3(0.32, 0.96, 0.76);
-                            vec3 baseCol = mix(gold, pink, aSeed.z);
-                            vColor = mix(baseCol, emerald, uAurora * step(0.45, aSeed.x) * 0.75);
-
-                            float size = (12.0 + aSeed.z * 22.0) * (1.0 + uAurora * 0.25);
-                            gl_PointSize = clamp((size * uPixelRatio) / depth, 1.4, 24.0);
-                        }
-                    `,
-                    fragmentShader: `
-                        precision highp float;
-                        uniform sampler2D uTexture;
-                        varying float vAlpha;
-                        varying vec3 vColor;
-
-                        void main() {
-                            vec4 tex = texture2D(uTexture, gl_PointCoord);
-                            if (tex.a < 0.01) discard;
-                            gl_FragColor = vec4(vColor * tex.rgb, tex.a * vAlpha);
-                        }
-                    `
-                });
-
-                stardustPoints = new THREE.Points(dustGeo, dustMat);
-                scene.add(stardustPoints);
-            }
-
-            function populateTulipParticles(opts) {
-                const {
-                    startIndex, count, center, scale, leanX, leanZ, rotY, delay, isHero,
-                    targetPositions, startPositions, partTypes, heightFactors, randomSeeds, tulipDelays, heroFlags
-                } = opts;
-
-                const stemHeight = 2.35 * scale;
-                const cosR = Math.cos(rotY);
-                const sinR = Math.sin(rotY);
-
-                for (let p = 0; p < count; p++) {
-                    const idx = startIndex + p;
-                    const i3 = idx * 3;
-                    const normP = p / count;
-
-                    let lx = 0, ly = 0, lz = 0;
-                    let partType = 0.0;
-                    let hFactor = 0.0;
-
-                    if (normP < 0.19) {
-                        const u = normP / 0.19;
-                        ly = u * stemHeight;
-                        const curve = Math.sin(u * Math.PI) * 0.11 * scale;
-                        const rStem = 0.032 * scale * (1.0 - u * 0.25);
-                        const theta = Math.random() * Math.PI * 2;
-                        lx = curve + Math.cos(theta) * rStem;
-                        lz = Math.sin(theta) * rStem;
-                        partType = 0.0;
-                        hFactor = u;
-                    } else if (normP < 0.42) {
-                        const leafSide = (p % 2 === 0) ? 1.0 : -1.0;
-                        const tLeaf = Math.pow(Math.random(), 0.85);
-                        const wLeaf = (Math.random() - 0.5) * 2.0;
-
-                        const widthProfile = Math.sin(tLeaf * Math.PI) * 0.34 * scale;
-                        const edgeBias = Math.sign(wLeaf) * Math.pow(Math.abs(wLeaf), 0.65);
-
-                        const leafLength = 1.65 * scale;
-                        const archOut = Math.sin(tLeaf * Math.PI * 0.85) * 0.68 * scale;
-                        const cupCurve = (1.0 - edgeBias * edgeBias) * 0.08 * scale;
-
-                        lx = leafSide * (archOut + cupCurve);
-                        ly = (0.15 + tLeaf * 0.78) * leafLength;
-                        lz = edgeBias * widthProfile + leafSide * 0.05;
-
-                        if (leafSide < 0) {
-                            const rot = 0.55;
-                            const nx = lx * Math.cos(rot) - lz * Math.sin(rot);
-                            const nz = lx * Math.sin(rot) + lz * Math.cos(rot);
-                            lx = nx;
-                            lz = nz;
-                        }
-
-                        partType = 1.0;
-                        hFactor = tLeaf;
-                    } else if (normP < 0.91) {
-                        const petalIdx = p % 6;
-                        const isInner = petalIdx >= 3;
-                        const baseAngle = (petalIdx % 3) * ((Math.PI * 2) / 3) + (isInner ? Math.PI / 3 : 0);
-
-                        const v = Math.random();
-                        const u = (Math.random() - 0.5) * 2.0;
-                        const uBiased = Math.sign(u) * Math.pow(Math.abs(u), 0.70);
-
-                        const petalH = (isInner ? 0.98 : 1.04) * scale;
-                        const bellyRadius = Math.sin(Math.pow(v, 0.75) * Math.PI * 0.88) * 0.45 * scale;
-                        const baseRadius = 0.09 * scale;
-                        const r = baseRadius + bellyRadius + (isInner ? -0.035 : 0.015) * scale;
-
-                        const angularSpan = Math.sin(v * Math.PI * 0.92) * 0.62;
-                        const theta = baseAngle + uBiased * angularSpan;
-                        const tipFlare = Math.pow(v, 4.0) * 0.075 * scale;
-
-                        lx = Math.cos(theta) * (r + tipFlare);
-                        lz = Math.sin(theta) * (r + tipFlare);
-                        ly = stemHeight - 0.05 * scale + v * petalH;
-
-                        partType = 2.0;
-                        hFactor = v;
-                    } else {
-                        const r = Math.random() * (isHero ? 0.34 : 0.16) * scale;
-                        const theta = Math.random() * Math.PI * 2;
-                        const v = Math.random();
-                        lx = Math.cos(theta) * r;
-                        lz = Math.sin(theta) * r;
-                        const extraLift = (isHero && v > 0.62) ? (v - 0.62) * 2.4 * scale : 0.0;
-                        ly = stemHeight + (0.25 + v * 0.60) * scale + extraLift;
-                        partType = 3.0;
-                        hFactor = v;
-                    }
-
-                    let rx = lx * cosR - lz * sinR;
-                    let rz = lx * sinR + lz * cosR;
-                    let ry = ly;
-
-                    rx += ry * leanX;
-                    rz += ry * leanZ;
-
-                    targetPositions[i3] = center.x + rx;
-                    targetPositions[i3 + 1] = center.y + ry;
-                    targetPositions[i3 + 2] = center.z + rz;
-
-                    const swirlAngle = (idx * 0.015) + (normP * 4.5) + (Math.random() - 0.5) * 1.4;
-                    const funnelHeight = 4.5 + Math.random() * 14.5 + (1.0 - normP) * 4.0;
-                    const funnelRadius = 1.6 + funnelHeight * 0.72 + (Math.random() - 0.5) * 3.5;
-
-                    startPositions[i3] = Math.cos(swirlAngle) * funnelRadius + Math.sin(funnelHeight * 0.4) * 2.5;
-                    startPositions[i3 + 1] = funnelHeight;
-                    startPositions[i3 + 2] = Math.sin(swirlAngle) * funnelRadius - 3.5;
-
-                    partTypes[idx] = partType;
-                    heightFactors[idx] = hFactor;
-                    tulipDelays[idx] = delay;
-                    heroFlags[idx] = isHero ? 1.0 : 0.0;
-
-                    randomSeeds[i3] = Math.random();
-                    randomSeeds[i3 + 1] = Math.random();
-                    randomSeeds[i3 + 2] = Math.random();
-                }
-            }
-
-            function buildTulipGarden() {
-                const ambientTotal = CONFIG.tulipCount * CONFIG.particlesPerTulip;
-                const totalParticles = ambientTotal + CONFIG.heroParticlesCount;
-
-                const targetPositions = new Float32Array(totalParticles * 3);
-                const startPositions = new Float32Array(totalParticles * 3);
-                const partTypes = new Float32Array(totalParticles);
-                const heightFactors = new Float32Array(totalParticles);
-                const randomSeeds = new Float32Array(totalParticles * 3);
-                const tulipDelays = new Float32Array(totalParticles);
-                const heroFlags = new Float32Array(totalParticles);
-
-                const tulipCenters = [];
-                for (let t = 0; t < CONFIG.tulipCount; t++) {
-                    const ratio = t / CONFIG.tulipCount;
-                    const angle = t * 2.3999632;
-                    const radius = 1.6 + Math.sqrt(ratio) * 19.5;
-
-                    let tx = Math.cos(angle) * radius * 1.28;
-                    let tz = Math.sin(angle) * radius - 3.2;
-
-                    if (tz > 9.5) tz -= 14.5;
-
-                    const dxHero = tx - HERO_POS.x;
-                    const dzHero = tz - HERO_POS.z;
-                    const distHero = Math.hypot(dxHero, dzHero);
-                    if (distHero < 2.65) {
-                        const pushAngle = Math.atan2(dzHero, dxHero) || (t * 1.1);
-                        tx = HERO_POS.x + Math.cos(pushAngle) * 2.75;
-                        tz = HERO_POS.z + Math.sin(pushAngle) * 2.75;
-                    }
-
-                    const ty = getTerrainHeight(tx, tz);
-                    const scale = 0.78 + Math.random() * 0.55;
-                    const leanX = (Math.random() - 0.5) * 0.24;
-                    const leanZ = (Math.random() - 0.5) * 0.24;
-                    const rotY = Math.random() * Math.PI * 2;
-                    const delay = Math.min(0.42, Math.max(0.0, (radius / 22.0) * 0.30 + Math.random() * 0.14));
-
-                    tulipCenters.push({ x: tx, y: ty, z: tz, scale, leanX, leanZ, rotY, delay });
-                }
-
-                tulipCenters.sort((a, b) => b.z - a.z);
-
-                for (let t = 0; t < CONFIG.tulipCount; t++) {
-                    const tulip = tulipCenters[t];
-                    populateTulipParticles({
-                        startIndex: t * CONFIG.particlesPerTulip,
-                        count: CONFIG.particlesPerTulip,
-                        center: tulip,
-                        scale: tulip.scale,
-                        leanX: tulip.leanX,
-                        leanZ: tulip.leanZ,
-                        rotY: tulip.rotY,
-                        delay: tulip.delay,
-                        isHero: false,
-                        targetPositions, startPositions, partTypes, heightFactors, randomSeeds, tulipDelays, heroFlags
-                    });
-                }
-
-                HERO_POS.y = getTerrainHeight(HERO_POS.x, HERO_POS.z);
-                populateTulipParticles({
-                    startIndex: ambientTotal,
-                    count: CONFIG.heroParticlesCount,
-                    center: HERO_POS,
-                    scale: HERO_SCALE,
-                    leanX: 0.02,
-                    leanZ: 0.03,
-                    rotY: 0.35,
-                    delay: 0.04,
-                    isHero: true,
-                    targetPositions, startPositions, partTypes, heightFactors, randomSeeds, tulipDelays, heroFlags
-                });
-
-                const hitGeo = new THREE.CylinderGeometry(1.55, 1.35, 5.1, 16);
-                const hitMat = new THREE.MeshBasicMaterial({ visible: false });
-                heroHitbox = new THREE.Mesh(hitGeo, hitMat);
-                heroHitbox.position.set(HERO_POS.x, HERO_POS.y + 2.35, HERO_POS.z);
-                scene.add(heroHitbox);
-
-                const geometry = new THREE.BufferGeometry();
-                geometry.setAttribute('position', new THREE.BufferAttribute(targetPositions, 3));
-                geometry.setAttribute('aStartPos', new THREE.BufferAttribute(startPositions, 3));
-                geometry.setAttribute('aPartType', new THREE.BufferAttribute(partTypes, 1));
-                geometry.setAttribute('aHeightFactor', new THREE.BufferAttribute(heightFactors, 1));
-                geometry.setAttribute('aSeed', new THREE.BufferAttribute(randomSeeds, 3));
-                geometry.setAttribute('aDelay', new THREE.BufferAttribute(tulipDelays, 1));
-                geometry.setAttribute('aIsHero', new THREE.BufferAttribute(heroFlags, 1));
-
-                uniforms = {
-                    uTime: { value: 0 },
-                    uMorph: { value: 0 },
-                    uAurora: { value: 0 },
-                    uLetterOpen: { value: 0 },
-                    uHeroHover: { value: 0 },
-                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
-                    uGlow: { value: CONFIG.glowIntensity },
-                    uTexture: { value: createGlowTexture() },
-                    uColorPetalBase: { value: PALETTE.petalBase.clone() },
-                    uColorPetalTip: { value: PALETTE.petalTip.clone() },
-                    uColorStem: { value: PALETTE.stem.clone() },
-                    uColorSpark: { value: PALETTE.spark.clone() },
-                    uColorHeroBase: { value: PALETTE.heroBase.clone() },
-                    uColorHeroTip: { value: PALETTE.heroTip.clone() },
-                    uCursorPos: { value: new THREE.Vector3(0, -100, 0) },
-                    uCursorEnergy: { value: 0.0 }
-                };
-
-                const material = new THREE.ShaderMaterial({
-                    uniforms: uniforms,
-                    vertexShader: `
-                        attribute vec3 aStartPos;
-                        attribute float aPartType;
-                        attribute float aHeightFactor;
-                        attribute vec3 aSeed;
-                        attribute float aDelay;
-                        attribute float aIsHero;
-
-                        uniform float uTime;
-                        uniform float uMorph;
-                        uniform float uAurora;
-                        uniform float uLetterOpen;
-                        uniform float uHeroHover;
-                        uniform float uPixelRatio;
-                        uniform float uGlow;
-                        uniform vec3 uCursorPos;
-                        uniform float uCursorEnergy;
-
-                        varying vec3 vColor;
-                        varying float vAlpha;
-
-                        uniform vec3 uColorPetalBase;
-                        uniform vec3 uColorPetalTip;
-                        uniform vec3 uColorStem;
-                        uniform vec3 uColorSpark;
-                        uniform vec3 uColorHeroBase;
-                        uniform vec3 uColorHeroTip;
-
-                        float easeInOutCubic(float t) {
-                            return t < 0.5 ? 4.0 * t * t * t : 1.0 - pow(-2.0 * t + 2.0, 3.0) / 2.0;
-                        }
-
-                        void main() {
-                            float localProgress = clamp((uMorph - aDelay * 0.55) / (1.0 - aDelay * 0.55), 0.0, 1.0);
-                            float eased = easeInOutCubic(localProgress);
-
-                            float vortexStrength = sin(eased * 3.14159265);
-                            float spinAngle = vortexStrength * (2.6 + aSeed.x * 2.2) * (aSeed.y > 0.5 ? 1.0 : -1.0);
-
-                            vec3 pos = mix(aStartPos, position, eased);
-
-                            float s = sin(spinAngle);
-                            float c = cos(spinAngle);
-                            vec2 xz = pos.xz;
-                            pos.x = xz.x * c - xz.y * s;
-                            pos.z = xz.x * s + xz.y * c;
-
-                            float spaceFloat = (1.0 - eased);
-                            pos.x += sin(uTime * 0.7 + aSeed.x * 12.0) * 1.4 * spaceFloat;
-                            pos.y += cos(uTime * 0.6 + aSeed.y * 10.0) * 1.1 * spaceFloat;
-                            pos.z += sin(uTime * 0.5 + aSeed.z * 14.0) * 1.4 * spaceFloat;
-
-                            float breezeStrength = eased * (0.25 + aHeightFactor * 0.75);
-                            float windWave = sin(uTime * 1.35 + position.x * 0.45 + position.z * 0.35);
-                            pos.x += windWave * 0.11 * breezeStrength;
-                            pos.z += cos(uTime * 1.1 + position.z * 0.4) * 0.07 * breezeStrength;
-
-                            if (uAurora > 0.01) {
-                                float wavePulse = sin(uTime * 2.2 - length(pos.xz) * 0.45) * 0.5 + 0.5;
-                                pos.y += wavePulse * 0.08 * uAurora * aHeightFactor;
-                            }
-
-                            if (aIsHero > 0.5 && aPartType > 2.5 && eased > 0.8) {
-                                float liftCycle = fract(aSeed.y + uTime * (0.35 + uLetterOpen * 0.28));
-                                pos.y += liftCycle * (1.65 + uLetterOpen * 0.85);
-                                pos.x += sin(uTime * 2.0 + aSeed.x * 10.0) * 0.22 * liftCycle;
-                                pos.z += cos(uTime * 2.0 + aSeed.z * 10.0) * 0.22 * liftCycle;
-                            }
-
-                            vec3 toParticle = pos - uCursorPos;
-                            float distCursor = length(toParticle);
-                            float influenceRadius = 3.8;
-                            if (distCursor < influenceRadius && uCursorEnergy > 0.01) {
-                                float force = pow(1.0 - distCursor / influenceRadius, 2.0) * uCursorEnergy;
-                                vec3 pushDir = normalize(toParticle + vec3(0.0, 0.45, 0.0));
-                                pos += pushDir * force * (0.65 + aHeightFactor * 0.85);
-                                pos.x += -toParticle.z * force * 0.45;
-                                pos.z += toParticle.x * force * 0.45;
-                            }
-
-                            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                            gl_Position = projectionMatrix * mvPosition;
-
-                            float beatWave = sin(uTime * 3.4);
-                            float doubleBeat = pow(max(0.0, sin(uTime * 3.4)), 3.0) + 0.45 * pow(max(0.0, sin(uTime * 3.4 - 0.85)), 4.0);
-                            float heroHeartbeat = clamp(0.35 + 0.65 * doubleBeat + 0.15 * beatWave, 0.0, 1.2);
-                            float heroBeacon = aIsHero * uLetterOpen;
-
-                            vec3 baseCol;
-                            if (aPartType < 0.5) {
-                                baseCol = mix(uColorStem * 0.75, uColorStem * 1.35, aHeightFactor);
-                            } else if (aPartType < 1.5) {
-                                baseCol = mix(uColorStem, uColorPetalTip * 0.9, pow(aHeightFactor, 1.4));
-                            } else if (aPartType < 2.5) {
-                                if (aIsHero > 0.5) {
-                                    baseCol = mix(uColorHeroBase, uColorHeroTip, pow(aHeightFactor, 0.78));
-                                    float goldRim = smoothstep(0.55, 1.0, aHeightFactor);
-                                    baseCol = mix(baseCol, uColorSpark * 1.45, goldRim * (0.58 + 0.32 * heroBeacon));
-                                } else {
-                                    baseCol = mix(uColorPetalBase, uColorPetalTip, pow(aHeightFactor, 0.85));
-                                    float tipSpark = smoothstep(0.78, 1.0, aHeightFactor) * step(0.62, aSeed.z);
-                                    baseCol = mix(baseCol, uColorSpark, tipSpark * 0.8);
-                                }
-                            } else {
-                                baseCol = uColorSpark * 1.55;
-                            }
-
-                            if (uAurora > 0.01) {
-                                float auroraShimmer = sin(uTime * 1.8 + pos.x * 0.3 + pos.z * 0.3) * 0.5 + 0.5;
-                                vec3 auroraTint = mix(vec3(0.35, 0.95, 0.78), vec3(1.0, 0.84, 0.45), auroraShimmer);
-                                baseCol = mix(baseCol, baseCol + auroraTint * 0.42, uAurora * (0.40 + 0.60 * aIsHero));
-                            }
-
-                            if (heroBeacon > 0.01) {
-                                vec3 beaconGlow = mix(vec3(1.0, 0.76, 0.42), vec3(1.0, 0.96, 0.98), heroHeartbeat);
-                                baseCol = baseCol * (1.0 + heroBeacon * (0.65 + 0.75 * heroHeartbeat)) + beaconGlow * (0.42 * heroBeacon * heroHeartbeat);
-                            }
-
-                            vec3 starColor = mix(uColorPetalTip, uColorSpark, aSeed.x);
-                            vColor = mix(starColor * 1.35, baseCol, eased);
-
-                            float twinkle = 0.74 + 0.26 * sin(uTime * (2.5 + aSeed.y * 4.0) + aSeed.x * 25.0);
-                            if (heroBeacon > 0.01) {
-                                float heroBlink = 0.75 + 0.55 * heroHeartbeat;
-                                twinkle = mix(twinkle, heroBlink, heroBeacon);
-                            }
-
-                            float depth = -mvPosition.z;
-                            float focalPlane = 9.5;
-                            float coc = clamp(abs(depth - focalPlane) / 14.5, 0.0, 1.0);
-                            if (aIsHero > 0.5) coc *= 0.10;
-
-                            float heroPulseSize = heroBeacon * (0.45 + 0.42 * heroHeartbeat);
-                            float heroBoost = aIsHero > 0.5 ? (1.36 + 0.16 * sin(uTime * 2.8) + uHeroHover * 0.25 + heroPulseSize) : 1.0;
-                            float auroraBoost = 1.0 + uAurora * 0.18;
-                            float baseSize = (aPartType > 1.5 ? 25.0 : 20.0) * (0.72 + aSeed.z * 0.65) * heroBoost * auroraBoost;
-                            float bokehSize = baseSize * (1.0 + coc * 1.35) * uGlow;
-
-                            gl_PointSize = clamp((bokehSize * uPixelRatio) / max(depth, 0.8), 1.6, 76.0);
-
-                            float depthFade = smoothstep(35.0, 14.0, depth) * smoothstep(0.6, 2.2, depth);
-                            vAlpha = twinkle * depthFade * (1.0 - coc * 0.48) * (0.72 + 0.28 * vortexStrength);
-                            if (aIsHero > 0.5) {
-                                vAlpha = min(1.0, vAlpha * (1.30 + heroBeacon * 0.40));
-                            } else if (uLetterOpen > 0.01) {
-                                vAlpha *= (1.0 - uLetterOpen * 0.18);
-                            }
-                        }
-                    `,
-                    fragmentShader: `
-                        precision highp float;
-                        uniform sampler2D uTexture;
-                        varying vec3 vColor;
-                        varying float vAlpha;
-
-                        void main() {
-                            vec4 texColor = texture2D(uTexture, gl_PointCoord);
-                            if (texColor.a < 0.01) discard;
-                            gl_FragColor = vec4(vColor * texColor.rgb, texColor.a * vAlpha);
-                        }
-                    `,
-                    transparent: true,
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending
-                });
-
-                gardenPoints = new THREE.Points(geometry, material);
-                scene.add(gardenPoints);
-            }
-
-            function triggerAuroraAndLetter() {
-                auroraActive = true;
-                letterOpen = true;
-
-                const hintPill = document.getElementById('hint-pill');
-                if (hintPill) hintPill.style.opacity = '0';
-
-                worldCursor.copy(HERO_POS).add(new THREE.Vector3(0, 2.0, 0));
-                cursorEnergy = 2.0;
-
-                const overlay = document.getElementById('letter-overlay');
-                const card = document.getElementById('letter-card');
-                overlay.classList.remove('pointer-events-none');
-                overlay.style.opacity = '1';
-                card.style.transform = 'translateX(0) translateY(0) scale(1)';
-            }
-
-            function closeLetter() {
-                letterOpen = false;
-                auroraActive = false;
-
-                const overlay = document.getElementById('letter-overlay');
-                const card = document.getElementById('letter-card');
-                overlay.style.opacity = '0';
-                overlay.classList.add('pointer-events-none');
-                if (window.innerWidth < 640) {
-                    card.style.transform = 'translateY(32px) scale(0.95)';
+                    const r = 0.055 * cfg.scale * (1.0 - u * 0.35);
+                    tx = cfg.x + bend + Math.cos(theta) * r;
+                    ty = u * cfg.height;
+                    tz = cfg.z + Math.sin(theta) * r;
+                    tempColor.copy(cStem).lerp(cGold, u * 0.18);
+                    pType = 0.0;
+                } else if (p < stemCount + leafCount) {
+                    const leafSide = p % 2 === 0 ? 1 : -1;
+                    const u = Math.random();
+                    const v = (Math.random() - 0.5) * 2.0;
+                    const leafLen = 2.2 * cfg.scale;
+                    const leafWidth = Math.sin(u * Math.PI) * 0.42 * cfg.scale;
+                    const lx = leafSide * (u * leafLen * 0.65);
+                    const ly = cfg.height * 0.16 + Math.sin(u * Math.PI * 0.78) * leafLen * 0.85;
+                    const lz = v * leafWidth;
+                    const rotY = cfg.x * 0.4 + leafSide * 0.5;
+                    tx = cfg.x + lx * Math.cos(rotY) - lz * Math.sin(rotY);
+                    ty = ly;
+                    tz = cfg.z + lx * Math.sin(rotY) + lz * Math.cos(rotY);
+                    tempColor.copy(cStem).offsetHSL(0.02, 0.08, u * 0.14);
+                    pType = 0.0;
                 } else {
-                    card.style.transform = 'translateX(48px) scale(0.95)';
-                }
-            }
+                    const petalIdx = p % 6;
+                    const petalAngle = (petalIdx / 6) * Math.PI * 2 + (petalIdx % 2) * 0.18;
+                    const u = Math.pow(Math.random(), 0.72);
+                    const v = (Math.random() - 0.5) * 2.0;
+                    const cupHeight = 1.65 * cfg.scale;
+                    const profile = Math.sin(u * Math.PI * 0.86);
+                    const cupRadius = (0.22 + profile * 0.62) * cfg.scale * (petalIdx % 2 === 0 ? 0.94 : 1.04);
+                    const widthSpread = v * 0.42 * profile;
 
-            function checkHeroIntersection() {
-                if (!heroHitbox || morphProgress < 0.50) return false;
-                raycaster.setFromCamera(mouseNDC, camera);
-                const intersects = raycaster.intersectObject(heroHitbox, false);
-                return intersects.length > 0;
-            }
+                    const localAngle = petalAngle + widthSpread;
+                    const px = Math.cos(localAngle) * cupRadius;
+                    const pz = Math.sin(localAngle) * cupRadius;
+                    const py = cfg.height - 0.1 + u * cupHeight;
 
-            function init() {
-                const container = document.getElementById('canvas-container');
-                clock = new THREE.Clock();
+                    tx = cfg.x + px;
+                    ty = py;
+                    tz = cfg.z + pz;
 
-                scene = new THREE.Scene();
-                scene.fog = new THREE.FogExp2(0x03020a, 0.020);
-
-                camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 165);
-                camera.position.copy(currentCamPos);
-
-                renderer = new THREE.WebGLRenderer({
-                    antialias: true,
-                    powerPreference: "high-performance"
-                });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                container.appendChild(renderer.domElement);
-
-                buildCosmicAtmosphere();
-                buildTulipGarden();
-                setupEvents();
-            }
-
-            function setupEvents() {
-                const dom = renderer.domElement;
-                const closeBtn = document.getElementById('close-letter-btn');
-                const overlay = document.getElementById('letter-overlay');
-
-                closeBtn.addEventListener('click', closeLetter);
-                overlay.addEventListener('click', (e) => {
-                    if (e.target === overlay) closeLetter();
-                });
-
-                function updatePointer(clientX, clientY) {
-                    mouseNDC.x = (clientX / window.innerWidth) * 2 - 1;
-                    mouseNDC.y = -(clientY / window.innerHeight) * 2 + 1;
-
-                    isHoveringHero = checkHeroIntersection();
-                    dom.style.cursor = isHoveringHero ? 'pointer' : 'default';
-
-                    raycaster.setFromCamera(mouseNDC, camera);
-                    const hit = new THREE.Vector3();
-                    if (raycaster.ray.intersectPlane(groundPlane, hit)) {
-                        worldCursor.copy(hit);
-                        worldCursor.y += 1.2;
-                        cursorEnergy = Math.min(1.6, cursorEnergy + 0.35);
+                    tempColor.copy(cPetalBase).lerp(cPetalTip, Math.pow(u, 1.35));
+                    if (u > 0.82 || (u < 0.25 && Math.random() > 0.72)) {
+                        tempColor.lerp(cGold, cfg.isHero ? 0.72 : 0.42);
                     }
+                    pType = 1.0;
                 }
 
-                dom.addEventListener('pointerdown', (e) => {
-                    isPointerDown = true;
-                    pointerDownPos.x = e.clientX;
-                    pointerDownPos.y = e.clientY;
-                    lastPointer.x = e.clientX;
-                    lastPointer.y = e.clientY;
-                    updatePointer(e.clientX, e.clientY);
+                targetPositions[idx * 3] = tx;
+                targetPositions[idx * 3 + 1] = ty;
+                targetPositions[idx * 3 + 2] = tz;
+
+                const swirlAngle = Math.random() * Math.PI * 6;
+                const swirlRadius = 4.0 + Math.random() * 24.0;
+                startPositions[idx * 3] = Math.cos(swirlAngle) * swirlRadius;
+                startPositions[idx * 3 + 1] = 10.0 + Math.random() * 18.0;
+                startPositions[idx * 3 + 2] = Math.sin(swirlAngle) * swirlRadius - 4.0;
+
+                colors[idx * 3] = tempColor.r;
+                colors[idx * 3 + 1] = tempColor.g;
+                colors[idx * 3 + 2] = tempColor.b;
+
+                sizes[idx] = cfg.isHero
+                    ? (0.27 + Math.random() * 0.18)
+                    : (0.14 + Math.random() * 0.12);
+
+                phases[idx] = Math.random() * Math.PI * 2;
+                delays[idx] = baseDelay + Math.random() * 0.28;
+                isHeroAttr[idx] = cfg.isHero ? 1.0 : 0.0;
+                partTypeAttr[idx] = pType;
+
+                idx++;
+            }
+        }
+
+        const heroSparkleCount = 65;
+        for (let s = 0; s < heroSparkleCount && idx < totalParticles; s++) {
+            const ang = Math.random() * Math.PI * 2;
+            const rad = 0.5 + Math.random() * 1.45;
+            targetPositions[idx * 3] = heroWorldPos.x + Math.cos(ang) * rad;
+            targetPositions[idx * 3 + 1] = 3.2 + Math.random() * 4.4;
+            targetPositions[idx * 3 + 2] = heroWorldPos.z + Math.sin(ang) * rad;
+
+            const sAng = Math.random() * Math.PI * 4;
+            startPositions[idx * 3] = Math.cos(sAng) * 10.0;
+            startPositions[idx * 3 + 1] = 14.0 + Math.random() * 10.0;
+            startPositions[idx * 3 + 2] = Math.sin(sAng) * 10.0;
+
+            const spCol = new THREE.Color().setHSL(Math.random() > 0.35 ? 0.12 : 0.93, 1.0, 0.78);
+            colors[idx * 3] = spCol.r;
+            colors[idx * 3 + 1] = spCol.g;
+            colors[idx * 3 + 2] = spCol.b;
+
+            sizes[idx] = 0.2 + Math.random() * 0.18;
+            phases[idx] = Math.random() * Math.PI * 2;
+            delays[idx] = 0.1 + Math.random() * 0.25;
+            isHeroAttr[idx] = 1.0;
+            partTypeAttr[idx] = 3.0;
+            idx++;
+        }
+
+        while (idx < totalParticles) {
+            const rx = (Math.random() - 0.5) * 56;
+            const ry = Math.random() * 24;
+            const rz = (Math.random() - 0.5) * 48 - 4;
+
+            targetPositions[idx * 3] = rx;
+            targetPositions[idx * 3 + 1] = ry;
+            targetPositions[idx * 3 + 2] = rz;
+
+            const ang = Math.random() * Math.PI * 4;
+            const rad = 8 + Math.random() * 26;
+            startPositions[idx * 3] = Math.cos(ang) * rad;
+            startPositions[idx * 3 + 1] = 14 + Math.random() * 16;
+            startPositions[idx * 3 + 2] = Math.sin(ang) * rad;
+
+            const starColor = new THREE.Color().setHSL(
+                Math.random() > 0.45 ? 0.92 : (Math.random() > 0.5 ? 0.12 : 0.52),
+                0.85,
+                0.72
+            );
+            colors[idx * 3] = starColor.r;
+            colors[idx * 3 + 1] = starColor.g;
+            colors[idx * 3 + 2] = starColor.b;
+
+            sizes[idx] = 0.1 + Math.random() * 0.16;
+            phases[idx] = Math.random() * Math.PI * 2;
+            delays[idx] = Math.random() * 0.55;
+            isHeroAttr[idx] = 0.0;
+            partTypeAttr[idx] = 2.0;
+
+            idx++;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(targetPositions, 3));
+        geometry.setAttribute('aStartPos', new THREE.BufferAttribute(startPositions, 3));
+        geometry.setAttribute('aTargetPos', new THREE.BufferAttribute(targetPositions, 3));
+        geometry.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+        geometry.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
+        geometry.setAttribute('aDelay', new THREE.BufferAttribute(delays, 1));
+        geometry.setAttribute('aIsHero', new THREE.BufferAttribute(isHeroAttr, 1));
+        geometry.setAttribute('aPartType', new THREE.BufferAttribute(partTypeAttr, 1));
+
+        const particleMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uProgress: { value: 0 },
+                uPixelRatio: { value: renderer.getPixelRatio() },
+                uMap: { value: glowTexture },
+                uMouse: { value: new THREE.Vector3(999, 999, 999) },
+                uLetterOpen: { value: 0 },
+                uAuroraWave: { value: 0 }
+            },
+            vertexShader: `
+        attribute vec3 aStartPos;
+        attribute vec3 aTargetPos;
+        attribute vec3 aColor;
+        attribute float aSize;
+        attribute float aPhase;
+        attribute float aDelay;
+        attribute float aIsHero;
+        attribute float aPartType;
+
+        uniform float uTime;
+        uniform float uProgress;
+        uniform float uPixelRatio;
+        uniform vec3 uMouse;
+        uniform float uLetterOpen;
+        uniform float uAuroraWave;
+
+        varying vec3 vColor;
+        varying float vAlpha;
+
+        void main() {
+          float localP = clamp((uProgress - aDelay) / max(0.001, 1.0 - aDelay), 0.0, 1.0);
+          float ease = 1.0 - pow(1.0 - localP, 3.0);
+
+          float spiralAngle = (1.0 - ease) * 4.5 + aPhase * 0.25;
+          float s = sin(spiralAngle);
+          float c = cos(spiralAngle);
+          vec3 rotatedStart = vec3(
+            aStartPos.x * c - aStartPos.z * s,
+            aStartPos.y,
+            aStartPos.x * s + aStartPos.z * c
+          );
+
+          vec3 pos = mix(rotatedStart, aTargetPos, ease);
+
+          if (aPartType < 1.5) {
+            float heightFactor = clamp(pos.y / 5.5, 0.0, 1.0);
+            float windX = sin(uTime * 1.45 + pos.x * 0.28 + pos.z * 0.22 + aPhase * 0.3) * 0.22 * heightFactor * ease;
+            float windZ = cos(uTime * 1.15 + pos.z * 0.25 + aPhase * 0.2) * 0.14 * heightFactor * ease;
+            pos.x += windX;
+            pos.z += windZ;
+
+            float dMouse = distance(pos.xz, uMouse.xz);
+            if (dMouse < 3.6) {
+              float push = (1.0 - dMouse / 3.6) * 0.65 * heightFactor * ease;
+              vec2 dir = normalize(pos.xz - uMouse.xz + vec2(0.001));
+              pos.xz += dir * push;
+              pos.y += push * 0.25;
+            }
+          } else if (aPartType > 2.5) {
+            float lift = fract(uTime * 0.28 + aPhase);
+            pos.y += lift * 1.9 * ease;
+            pos.x += sin(uTime * 1.8 + aPhase * 2.0) * 0.32 * ease;
+            pos.z += cos(uTime * 1.6 + aPhase * 2.0) * 0.32 * ease;
+          } else {
+            pos.y += sin(uTime * 0.9 + aPhase) * 0.45;
+            pos.x += cos(uTime * 0.65 + aPhase) * 0.35;
+          }
+
+          float idlePulse = 0.5 + 0.5 * sin(uTime * 2.4 + aPhase * 0.3);
+          float heroPulse = 0.5 + 0.5 * sin(uTime * 4.4 + aPhase * 0.35);
+          float heroBoost = aIsHero * uLetterOpen;
+
+          vec3 col = aColor;
+          if (aIsHero > 0.5) {
+            float baseHighlight = 1.24 + 0.24 * idlePulse;
+            col *= baseHighlight;
+            col = mix(col, vec3(1.0, 0.93, 0.72), heroBoost * (0.28 + 0.36 * heroPulse));
+            col *= (1.0 + heroBoost * (0.85 + 0.75 * heroPulse));
+          } else {
+            col *= (0.76 - uLetterOpen * 0.22);
+            col += vec3(0.15, 0.45, 0.38) * uAuroraWave * 0.45;
+          }
+
+          vColor = col;
+
+          vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+
+          float sizeMult = 1.0;
+          if (aIsHero > 0.5) {
+            sizeMult += 0.22 + 0.14 * idlePulse + heroBoost * (0.5 + 0.42 * heroPulse);
+          }
+
+          float twinkle = 0.82 + 0.28 * sin(uTime * 3.0 + aPhase);
+          gl_PointSize = aSize * sizeMult * twinkle * uPixelRatio * (190.0 / max(1.0, -mvPosition.z));
+
+          float sparkleFade = aPartType > 2.5 ? sin(fract(uTime * 0.28 + aPhase) * 3.14159) * 0.85 : 1.0;
+          vAlpha = smoothstep(0.0, 0.2, localP) * (aPartType > 1.5 && aPartType < 2.5 ? 0.6 : 0.96) * sparkleFade;
+        }
+      `,
+            fragmentShader: `
+        uniform sampler2D uMap;
+        varying vec3 vColor;
+        varying float vAlpha;
+
+        void main() {
+          vec4 texColor = texture2D(uMap, gl_PointCoord);
+          if (texColor.a < 0.02) discard;
+          gl_FragColor = vec4(vColor * texColor.rgb, texColor.a * vAlpha);
+        }
+      `,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particleSystem = new THREE.Points(geometry, particleMaterial);
+        scene.add(particleSystem);
+
+        const auroraGeometry = new THREE.PlaneGeometry(64, 24, 96, 24);
+        const auroraMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uIntensity: { value: 0.16 }
+            },
+            vertexShader: `
+        uniform float uTime;
+        varying vec2 vUv;
+        varying float vWave;
+        void main() {
+          vUv = uv;
+          vec3 pos = position;
+          float wave = sin(pos.x * 0.14 + uTime * 0.85) * 2.2 + cos(pos.x * 0.26 - uTime * 0.6) * 1.1;
+          pos.z += wave;
+          pos.y += sin(pos.x * 0.1 + uTime * 0.5) * 0.9;
+          vWave = wave;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+      `,
+            fragmentShader: `
+        uniform float uTime;
+        uniform float uIntensity;
+        varying vec2 vUv;
+        varying float vWave;
+        void main() {
+          float vertFade = smoothstep(0.0, 0.35, vUv.y) * (1.0 - smoothstep(0.45, 1.0, vUv.y));
+          float horizFade = smoothstep(0.0, 0.2, vUv.x) * (1.0 - smoothstep(0.8, 1.0, vUv.x));
+          float curtains = 0.55 + 0.45 * sin(vUv.x * 28.0 + uTime * 1.4 + vWave * 0.6);
+          float shimmer = 0.65 + 0.35 * cos(vUv.x * 52.0 - uTime * 2.1);
+
+          vec3 emerald = vec3(0.16, 0.92, 0.68);
+          vec3 magenta = vec3(0.95, 0.32, 0.72);
+          vec3 gold = vec3(1.0, 0.84, 0.44);
+
+          vec3 col = mix(emerald, magenta, smoothstep(0.15, 0.85, vUv.y + sin(vUv.x * 6.0 + uTime * 0.5) * 0.18));
+          col = mix(col, gold, curtains * 0.28);
+
+          float alpha = vertFade * horizFade * curtains * shimmer * uIntensity;
+          gl_FragColor = vec4(col, alpha);
+        }
+      `,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide
+        });
+
+        const auroraMesh = new THREE.Mesh(auroraGeometry, auroraMaterial);
+        auroraMesh.position.set(0, 14.5, -24);
+        scene.add(auroraMesh);
+
+        const hitSphereGeo = new THREE.SphereGeometry(2.8, 16, 16);
+        const hitSphereMat = new THREE.MeshBasicMaterial({ visible: false });
+        const heroHitMesh = new THREE.Mesh(hitSphereGeo, hitSphereMat);
+        heroHitMesh.position.set(heroWorldPos.x, 3.6, heroWorldPos.z);
+        scene.add(heroHitMesh);
+
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+        const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.5);
+        const mouseWorld = new THREE.Vector3(999, 999, 999);
+
+        let isLetterOpen = false;
+        let isGameOpen = false;
+        let letterProgress = 0;
+        let auroraBoost = 0;
+        let hintShown = false;
+
+        const currentCamPos = defaultCamPos.clone();
+        const currentLookAt = defaultLookAt.clone();
+        const targetCamPos = defaultCamPos.clone();
+        const targetLookAt = defaultLookAt.clone();
+
+        function updateCameraTargets() {
+            const aspect = window.innerWidth / window.innerHeight;
+            if (!isLetterOpen) {
+                if (isPortrait()) {
+                    targetCamPos.set(0, 7.8, 28.5);
+                    targetLookAt.set(0, 3.0, 0);
+                } else {
+                    targetCamPos.set(0, 7.6, 25.5);
+                    targetLookAt.set(0, 3.1, 0);
+                }
+            } else if (isPortrait()) {
+                targetCamPos.set(0, 6.2, 23.8);
+                targetLookAt.set(0, 1.35, heroWorldPos.z);
+            } else {
+                const distZ = 20.5;
+                const vFov = THREE.MathUtils.degToRad(camera.fov);
+                const visibleHeight = 2 * Math.tan(vFov / 2) * (distZ - heroWorldPos.z);
+                const visibleWidth = visibleHeight * aspect;
+                const shiftX = visibleWidth * 0.24;
+
+                targetCamPos.set(shiftX, 5.4, distZ);
+                targetLookAt.set(shiftX, 3.6, heroWorldPos.z);
+            }
+        }
+
+        function openLetter() {
+            if (isLetterOpen || isGameOpen) return;
+            isLetterOpen = true;
+            auroraBoost = 1.0;
+            letterCard.classList.add('open');
+            hintPill.classList.remove('visible');
+            hintPill.classList.add('hidden');
+            updateCameraTargets();
+        }
+
+        function closeLetter() {
+            if (!isLetterOpen) return;
+            isLetterOpen = false;
+            letterCard.classList.remove('open');
+            updateCameraTargets();
+        }
+
+        closeLetterBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeLetter();
+        });
+
+        function updatePointerCoords(clientX, clientY) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+            pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+        }
+
+        function checkHeroClick(clientX, clientY) {
+            if (isGameOpen) return;
+            updatePointerCoords(clientX, clientY);
+            raycaster.setFromCamera(pointer, camera);
+            const hits = raycaster.intersectObject(heroHitMesh);
+            if (hits.length > 0) {
+                openLetter();
+            }
+        }
+
+        renderer.domElement.addEventListener('pointermove', (e) => {
+            if (isGameOpen) return;
+            updatePointerCoords(e.clientX, e.clientY);
+            raycaster.setFromCamera(pointer, camera);
+            raycaster.ray.intersectPlane(groundPlane, mouseWorld);
+            particleMaterial.uniforms.uMouse.value.copy(mouseWorld);
+
+            const hits = raycaster.intersectObject(heroHitMesh);
+            renderer.domElement.style.cursor = hits.length > 0 && !isLetterOpen ? 'pointer' : 'default';
+        });
+
+        renderer.domElement.addEventListener('pointerdown', (e) => {
+            if (isGameOpen) return;
+            updatePointerCoords(e.clientX, e.clientY);
+            raycaster.setFromCamera(pointer, camera);
+            raycaster.ray.intersectPlane(groundPlane, mouseWorld);
+            particleMaterial.uniforms.uMouse.value.copy(mouseWorld);
+            checkHeroClick(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            const pr = Math.min(window.devicePixelRatio || 1, window.innerWidth < 860 ? 1.75 : 2);
+            renderer.setPixelRatio(pr);
+            particleMaterial.uniforms.uPixelRatio.value = pr;
+            updateCameraTargets();
+        });
+
+        updateCameraTargets();
+        currentCamPos.copy(targetCamPos);
+        currentLookAt.copy(targetLookAt);
+
+        const clock = new THREE.Clock();
+        let morphProgress = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min(clock.getDelta(), 0.05);
+            const elapsed = clock.getElapsedTime();
+
+            if (morphProgress < 1) {
+                morphProgress = Math.min(1, morphProgress + dt * 0.24);
+            }
+
+            if (morphProgress > 0.85 && !hintShown && !isLetterOpen && !isGameOpen) {
+                hintShown = true;
+                hintPill.classList.add('visible');
+            }
+
+            const targetLetterVal = isLetterOpen ? 1.0 : 0.0;
+            letterProgress += (targetLetterVal - letterProgress) * Math.min(1, dt * 3.5);
+            auroraBoost = Math.max(0, auroraBoost - dt * 0.35);
+
+            particleMaterial.uniforms.uTime.value = elapsed;
+            particleMaterial.uniforms.uProgress.value = morphProgress;
+            particleMaterial.uniforms.uLetterOpen.value = letterProgress;
+            particleMaterial.uniforms.uAuroraWave.value = Math.max(letterProgress * 0.75, auroraBoost);
+
+            auroraMaterial.uniforms.uTime.value = elapsed;
+            const targetAuroraIntensity = 0.16 + letterProgress * 0.56 + auroraBoost * 0.35;
+            auroraMaterial.uniforms.uIntensity.value += (targetAuroraIntensity - auroraMaterial.uniforms.uIntensity.value) * Math.min(1, dt * 3.0);
+
+            const swayX = isLetterOpen ? 0 : Math.sin(elapsed * 0.32) * 1.1;
+            const swayY = isLetterOpen ? 0 : Math.cos(elapsed * 0.24) * 0.35;
+
+            const desiredPos = targetCamPos.clone().add(new THREE.Vector3(swayX, swayY, 0));
+            currentCamPos.lerp(desiredPos, Math.min(1, dt * 2.8));
+            currentLookAt.lerp(targetLookAt, Math.min(1, dt * 3.2));
+
+            camera.position.copy(currentCamPos);
+            camera.lookAt(currentLookAt);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        const pvzCanvas = document.getElementById('pvz-canvas');
+        const pCtx = pvzCanvas.getContext('2d');
+        const sunAmountEl = document.getElementById('sun-amount');
+        const scoreCountEl = document.getElementById('score-count');
+        const cocaCountEl = document.getElementById('coca-count');
+        const cocaBadgeEl = document.getElementById('coca-badge');
+        const cocaToastEl = document.getElementById('coca-toast');
+        const victoryModalEl = document.getElementById('victory-modal');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const victoryGardenBtn = document.getElementById('victory-garden-btn');
+        const plantCards = document.querySelectorAll('.plant-card');
+
+        const ROWS = 5;
+        const COLS = 9;
+        const GRID_LEFT = 76;
+        const GRID_TOP = 54;
+        const CELL_W = 82;
+        const CELL_H = 74;
+        const WIN_SCORE = 5000;
+
+        const stressLabels = ['Pendientes', 'Estrés', 'Prisa', 'Mil cosas', 'Cansancio', 'Sobrepensar'];
+
+        let gameLoopId = null;
+        let sunEnergy = 125;
+        let score = 0;
+        let cocaCount = 0;
+        let hasWon = false;
+        let toastTimeout = null;
+        let selectedPlant = 'sunflower';
+        let plants = [];
+        let zombies = [];
+        let projectiles = [];
+        let suns = [];
+        let sparks = [];
+        let floatingTexts = [];
+        let lastGameTime = 0;
+        let zombieSpawnTimer = 0;
+        let skySunTimer = 0;
+
+        const plantCosts = {
+            sunflower: 50,
+            peashooter: 100,
+            wallnut: 50
+        };
+
+        function drawSunflowerSprite(ctx, x, y, pulse) {
+            const sway = Math.sin(pulse * 0.8) * 2.5;
+            ctx.save();
+            ctx.translate(x, y);
+
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath();
+            ctx.ellipse(-8, 22, 10, 4.5, -0.35, 0, Math.PI * 2);
+            ctx.ellipse(8, 22, 10, 4.5, 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 4.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 22);
+            ctx.quadraticCurveTo(sway * 0.5, 8, sway, -6);
+            ctx.stroke();
+
+            ctx.translate(sway, -8);
+            for (let i = 0; i < 12; i++) {
+                const ang = (i / 12) * Math.PI * 2 + pulse * 0.08;
+                ctx.save();
+                ctx.rotate(ang);
+                ctx.fillStyle = i % 2 === 0 ? '#facc15' : '#eab308';
+                ctx.beginPath();
+                ctx.ellipse(0, -15, 4.2, 7.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            ctx.fillStyle = '#78350f';
+            ctx.beginPath();
+            ctx.arc(0, 0, 11.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#1c1917';
+            ctx.beginPath();
+            ctx.arc(-4, -2, 1.8, 0, Math.PI * 2);
+            ctx.arc(4, -2, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-4.5, -2.6, 0.7, 0, Math.PI * 2);
+            ctx.arc(3.5, -2.6, 0.7, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#1c1917';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.arc(0, 1.5, 4.5, 0.15 * Math.PI, 0.85 * Math.PI);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawPeashooterSprite(ctx, x, y, pulse, shootRecoil) {
+            const sway = Math.sin(pulse * 0.9) * 2.0 - shootRecoil * 4;
+            ctx.save();
+            ctx.translate(x, y);
+
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath();
+            ctx.ellipse(-9, 22, 10, 4.5, -0.35, 0, Math.PI * 2);
+            ctx.ellipse(9, 22, 10, 4.5, 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 4.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 22);
+            ctx.quadraticCurveTo(sway * 0.5, 8, sway, -6);
+            ctx.stroke();
+
+            ctx.translate(sway, -9);
+
+            ctx.fillStyle = '#16a34a';
+            ctx.beginPath();
+            ctx.ellipse(-12, -4, 6, 3.2, -0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#4ade80';
+            ctx.beginPath();
+            ctx.arc(-2, 0, 12.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.roundRect(4, -6, 13, 12, 4);
+            ctx.fill();
+
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath();
+            ctx.ellipse(17, 0, 3.2, 6.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#052e16';
+            ctx.beginPath();
+            ctx.ellipse(17, 0, 1.8, 4.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(3, -3.5, 2.6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(3.8, -4.3, 1.0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawWallnutSprite(ctx, x, y, pulse, hpRatio) {
+            const wobble = Math.sin(pulse * 0.7) * 0.05;
+            ctx.save();
+            ctx.translate(x, y + 3);
+            ctx.rotate(wobble);
+
+            const grad = ctx.createRadialGradient(-4, -6, 3, 0, 0, 21);
+            grad.addColorStop(0, '#d97706');
+            grad.addColorStop(0.7, '#b45309');
+            grad.addColorStop(1, '#78350f');
+            ctx.fillStyle = grad;
+
+            ctx.beginPath();
+            ctx.moveTo(0, -21);
+            ctx.bezierCurveTo(15, -21, 18, -4, 16, 12);
+            ctx.bezierCurveTo(14, 21, -14, 21, -16, 12);
+            ctx.bezierCurveTo(-18, -4, -15, -21, 0, -21);
+            ctx.fill();
+
+            ctx.strokeStyle = '#451a03';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            if (hpRatio < 0.65) {
+                ctx.strokeStyle = '#451a03';
+                ctx.lineWidth = 1.6;
+                ctx.beginPath();
+                ctx.moveTo(-8, -14);
+                ctx.lineTo(-3, -8);
+                ctx.lineTo(-7, -4);
+                ctx.stroke();
+            }
+            if (hpRatio < 0.35) {
+                ctx.beginPath();
+                ctx.moveTo(9, 4);
+                ctx.lineTo(4, 10);
+                ctx.lineTo(8, 14);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(-5, -4, 4.3, 0, Math.PI * 2);
+            ctx.arc(5, -4, 4.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(-4.2, -4, 2.0, 0, Math.PI * 2);
+            ctx.arc(5.8, -4, 2.0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#451a03';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            if (hpRatio < 0.45) {
+                ctx.arc(0, 9, 4.5, 1.15 * Math.PI, 1.85 * Math.PI);
+            } else {
+                ctx.arc(0, 4.5, 4.5, 0.15 * Math.PI, 0.85 * Math.PI);
+            }
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function renderCardIcons() {
+            const sfCtx = document.getElementById('icon-sunflower').getContext('2d');
+            sfCtx.save();
+            sfCtx.scale(1.55, 1.55);
+            drawSunflowerSprite(sfCtx, 28, 30, 0.4);
+            sfCtx.restore();
+
+            const psCtx = document.getElementById('icon-peashooter').getContext('2d');
+            psCtx.save();
+            psCtx.scale(1.55, 1.55);
+            drawPeashooterSprite(psCtx, 26, 30, 0.4, 0);
+            psCtx.restore();
+
+            const wnCtx = document.getElementById('icon-wallnut').getContext('2d');
+            wnCtx.save();
+            wnCtx.scale(1.55, 1.55);
+            drawWallnutSprite(wnCtx, 28, 28, 0.2, 1.0);
+            wnCtx.restore();
+        }
+
+        renderCardIcons();
+
+        function drawZombieSprite(ctx, z, bobY) {
+            ctx.save();
+            ctx.translate(z.x, bobY);
+
+            if (z.hitFlash > 0) {
+                ctx.filter = 'brightness(2.2)';
+            }
+
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(-6, 10, 5, 14);
+            ctx.fillRect(2, 10, 5, 14);
+
+            ctx.fillStyle = '#5c4033';
+            ctx.beginPath();
+            ctx.roundRect(-9, -6, 18, 18, 4);
+            ctx.fill();
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.moveTo(-3, -6);
+            ctx.lineTo(3, -6);
+            ctx.lineTo(0, 2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.moveTo(-1.5, -4);
+            ctx.lineTo(1.5, -4);
+            ctx.lineTo(2, 7);
+            ctx.lineTo(0, 10);
+            ctx.lineTo(-2, 7);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#5c4033';
+            ctx.lineWidth = 4.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-5, -2);
+            ctx.lineTo(-19, 1 + Math.sin(z.wobble) * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = '#84a98c';
+            ctx.beginPath();
+            ctx.arc(-20, 1 + Math.sin(z.wobble) * 2, 3.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#84a98c';
+            ctx.beginPath();
+            ctx.arc(0, -16, 11.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#52796f';
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(-3, -27);
+            ctx.lineTo(-5, -31);
+            ctx.moveTo(1, -27);
+            ctx.lineTo(2, -31);
+            ctx.stroke();
+
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(-5, -17, 3.8, 0, Math.PI * 2);
+            ctx.arc(2.5, -17, 3.0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(-5.6, -17, 1.5, 0, Math.PI * 2);
+            ctx.arc(2.0, -17, 1.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#450a0a';
+            ctx.beginPath();
+            ctx.ellipse(-2, -10.5, 4.5, 2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(-4, -12.5, 2, 2);
+            ctx.fillRect(0, -10, 2, 2);
+
+            ctx.filter = 'none';
+
+            if (z.hp < z.maxHp) {
+                const barW = 34;
+                ctx.fillStyle = 'rgba(15, 10, 34, 0.75)';
+                ctx.fillRect(-barW * 0.5, -53, barW, 4);
+                ctx.fillStyle = '#f472b6';
+                ctx.fillRect(-barW * 0.5, -53, barW * Math.max(0, z.hp / z.maxHp), 4);
+            }
+
+            ctx.fillStyle = 'rgba(15, 10, 34, 0.78)';
+            ctx.beginPath();
+            ctx.roundRect(-36, -46, 72, 16, 8);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(244, 114, 182, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.font = '600 10.5px "Plus Jakarta Sans", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText(z.label, 0, -34.5);
+
+            ctx.restore();
+        }
+
+        function drawSunSprite(ctx, x, y, r) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const sGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, r * 1.7);
+            sGrad.addColorStop(0, '#fef08a');
+            sGrad.addColorStop(0.5, 'rgba(250, 204, 21, 0.5)');
+            sGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+            ctx.fillStyle = sGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, r * 1.7, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#facc15';
+            for (let i = 0; i < 10; i++) {
+                const a = (i / 10) * Math.PI * 2 + r * 0.1;
+                ctx.save();
+                ctx.rotate(a);
+                ctx.beginPath();
+                ctx.moveTo(-3, -10);
+                ctx.lineTo(0, -17);
+                ctx.lineTo(3, -10);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(0, 0, 10.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#eab308';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function getCurrentWave() {
+            return Math.min(5, Math.floor(score / 1000) + 1);
+        }
+
+        function triggerCocaReward(waveNum) {
+            cocaCount++;
+            cocaBadgeEl.classList.add('pop');
+            setTimeout(() => cocaBadgeEl.classList.remove('pop'), 350);
+
+            cocaToastEl.textContent = `🥤 ¡Ganaste 1 Coca-Cola! · Oleada ${waveNum} (zombies más resistentes)`;
+            cocaToastEl.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                cocaToastEl.classList.remove('show');
+            }, 3800);
+
+            spawnSparks(pvzCanvas.width * 0.5, pvzCanvas.height * 0.45, '#ef4444', 32);
+            spawnSparks(pvzCanvas.width * 0.5, pvzCanvas.height * 0.45, '#fde047', 26);
+
+            const extraSpawns = Math.min(3, waveNum - 1);
+            for (let k = 0; k < extraSpawns; k++) {
+                setTimeout(() => {
+                    if (isGameOpen && !hasWon) spawnZombie();
+                }, k * 450);
+            }
+        }
+
+        function triggerVictory() {
+            hasWon = true;
+            cocaToastEl.classList.remove('show');
+            for (let z of zombies) {
+                spawnSparks(z.x, z.y, '#f472b6', 22);
+                spawnSparks(z.x, z.y, '#fde047', 16);
+            }
+            zombies = [];
+            victoryModalEl.classList.add('show');
+        }
+
+        function updateHud() {
+            sunAmountEl.textContent = sunEnergy;
+            scoreCountEl.textContent = score.toLocaleString('es-MX');
+            cocaCountEl.textContent = cocaCount;
+            plantCards.forEach(card => {
+                const type = card.dataset.plant;
+                const cost = Number(card.dataset.cost);
+                card.classList.toggle('selected', type === selectedPlant);
+                card.classList.toggle('disabled', sunEnergy < cost);
+            });
+        }
+
+        plantCards.forEach(card => {
+            card.addEventListener('click', () => {
+                selectedPlant = card.dataset.plant;
+                updateHud();
+            });
+        });
+
+        function spawnSparks(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 40 + Math.random() * 140;
+                sparks.push({
+                    x,
+                    y,
+                    vx: Math.cos(ang) * spd,
+                    vy: Math.sin(ang) * spd,
+                    life: 1,
+                    color,
+                    size: 2 + Math.random() * 3.5
                 });
+            }
+        }
 
-                window.addEventListener('pointermove', (e) => {
-                    updatePointer(e.clientX, e.clientY);
+        function spawnFloatingText(x, y, text, color) {
+            floatingTexts.push({
+                x,
+                y,
+                text,
+                color,
+                life: 1
+            });
+        }
 
-                    if (isPointerDown) {
-                        const dx = e.clientX - lastPointer.x;
-                        const dy = e.clientY - lastPointer.y;
-                        targetCameraRot.y -= dx * 0.0042;
-                        targetCameraRot.x = Math.max(0.03, Math.min(0.52, targetCameraRot.x + dy * 0.0032));
-                        lastPointer.x = e.clientX;
-                        lastPointer.y = e.clientY;
+        function spawnSkySun() {
+            const targetX = GRID_LEFT + 40 + Math.random() * (COLS * CELL_W - 80);
+            const targetY = GRID_TOP + 35 + Math.random() * (ROWS * CELL_H - 70);
+            suns.push({
+                x: targetX,
+                y: 16,
+                targetY,
+                vy: 38,
+                life: 12,
+                pulse: Math.random() * Math.PI * 2
+            });
+        }
+
+        function spawnZombie() {
+            const row = Math.floor(Math.random() * ROWS);
+            const y = GRID_TOP + row * CELL_H + CELL_H * 0.56;
+            const wave = getCurrentWave();
+            const baseHp = 95 + (wave - 1) * 45;
+            zombies.push({
+                row,
+                x: pvzCanvas.width + 24 + Math.random() * 45,
+                y,
+                hp: baseHp,
+                maxHp: baseHp,
+                speed: 9.5 + Math.random() * 4.5 + (wave - 1) * 1.1,
+                label: stressLabels[Math.floor(Math.random() * stressLabels.length)],
+                wobble: Math.random() * Math.PI * 2,
+                hitFlash: 0
+            });
+        }
+
+        function resetGame() {
+            sunEnergy = 125;
+            score = 0;
+            cocaCount = 0;
+            hasWon = false;
+            selectedPlant = 'sunflower';
+            plants = [];
+            zombies = [];
+            projectiles = [];
+            suns = [];
+            sparks = [];
+            floatingTexts = [];
+            zombieSpawnTimer = 2.4;
+            skySunTimer = 3.0;
+            cocaToastEl.classList.remove('show');
+            victoryModalEl.classList.remove('show');
+            updateHud();
+        }
+
+        function handleCanvasTap(clientX, clientY) {
+            if (hasWon) return;
+            const rect = pvzCanvas.getBoundingClientRect();
+            const scaleX = pvzCanvas.width / rect.width;
+            const scaleY = pvzCanvas.height / rect.height;
+            const mx = (clientX - rect.left) * scaleX;
+            const my = (clientY - rect.top) * scaleY;
+
+            for (let i = suns.length - 1; i >= 0; i--) {
+                const s = suns[i];
+                if (Math.hypot(mx - s.x, my - s.y) < 36) {
+                    sunEnergy += 25;
+                    spawnSparks(s.x, s.y, '#fde047', 14);
+                    spawnFloatingText(s.x, s.y - 10, '+25', '#fde047');
+                    suns.splice(i, 1);
+                    updateHud();
+                    return;
+                }
+            }
+
+            const col = Math.floor((mx - GRID_LEFT) / CELL_W);
+            const row = Math.floor((my - GRID_TOP) / CELL_H);
+
+            if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
+                const occupied = plants.some(p => p.row === row && p.col === col);
+                const cost = plantCosts[selectedPlant];
+                if (!occupied && sunEnergy >= cost) {
+                    sunEnergy -= cost;
+                    const cx = GRID_LEFT + col * CELL_W + CELL_W * 0.5;
+                    const cy = GRID_TOP + row * CELL_H + CELL_H * 0.52;
+                    plants.push({
+                        type: selectedPlant,
+                        row,
+                        col,
+                        x: cx,
+                        y: cy,
+                        hp: selectedPlant === 'wallnut' ? 320 : 90,
+                        maxHp: selectedPlant === 'wallnut' ? 320 : 90,
+                        timer: selectedPlant === 'sunflower' ? 4.5 : 1.1,
+                        pulse: Math.random() * Math.PI * 2,
+                        recoil: 0
+                    });
+                    const pColor = selectedPlant === 'sunflower' ? '#fde047' : (selectedPlant === 'peashooter' ? '#34d399' : '#d97706');
+                    spawnSparks(cx, cy, pColor, 16);
+                    updateHud();
+                }
+            }
+        }
+
+        pvzCanvas.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            handleCanvasTap(e.clientX, e.clientY);
+        });
+
+        function updateAndDrawGame(timestamp) {
+            if (!isGameOpen) return;
+            gameLoopId = requestAnimationFrame(updateAndDrawGame);
+
+            if (!lastGameTime) lastGameTime = timestamp;
+            const dt = Math.min((timestamp - lastGameTime) / 1000, 0.05);
+            lastGameTime = timestamp;
+
+            if (!hasWon) {
+                skySunTimer -= dt;
+                if (skySunTimer <= 0) {
+                    spawnSkySun();
+                    skySunTimer = 5.8;
+                }
+
+                const wave = getCurrentWave();
+                zombieSpawnTimer -= dt;
+                if (zombieSpawnTimer <= 0) {
+                    const batchCount = wave >= 4 ? 3 : (wave >= 2 ? 2 : 1);
+                    for (let b = 0; b < batchCount; b++) {
+                        spawnZombie();
+                    }
+                    zombieSpawnTimer = Math.max(2.6, 5.4 - (wave - 1) * 0.55);
+                }
+            }
+
+            pCtx.clearRect(0, 0, pvzCanvas.width, pvzCanvas.height);
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const x = GRID_LEFT + c * CELL_W;
+                    const y = GRID_TOP + r * CELL_H;
+                    pCtx.fillStyle = (r + c) % 2 === 0 ? 'rgba(34, 197, 94, 0.06)' : 'rgba(16, 185, 129, 0.035)';
+                    pCtx.beginPath();
+                    pCtx.roundRect(x + 3, y + 3, CELL_W - 6, CELL_H - 6, 10);
+                    pCtx.fill();
+                }
+            }
+
+            for (let i = plants.length - 1; i >= 0; i--) {
+                const p = plants[i];
+                p.pulse += dt * 4;
+                p.timer -= dt;
+                p.recoil = Math.max(0, p.recoil - dt * 4);
+
+                if (!hasWon && p.type === 'sunflower' && p.timer <= 0) {
+                    p.timer = 8.0;
+                    suns.push({
+                        x: p.x + (Math.random() - 0.5) * 26,
+                        y: p.y - 10,
+                        targetY: p.y + 14,
+                        vy: 25,
+                        life: 12,
+                        pulse: 0
+                    });
+                    spawnSparks(p.x, p.y - 12, '#fde047', 10);
+                } else if (!hasWon && p.type === 'peashooter' && p.timer <= 0) {
+                    const hasEnemyInRow = zombies.some(z => z.row === p.row && z.x > p.x);
+                    if (hasEnemyInRow) {
+                        p.timer = 1.4;
+                        p.recoil = 1.0;
+                        projectiles.push({
+                            row: p.row,
+                            x: p.x + 18,
+                            y: p.y - 9,
+                            vx: 295
+                        });
                     } else {
-                        targetCameraRot.y = -mouseNDC.x * 0.16;
-                        targetCameraRot.x = 0.14 - mouseNDC.y * 0.07;
+                        p.timer = 0.3;
                     }
-                });
+                }
 
-                window.addEventListener('pointerup', (e) => {
-                    if (isPointerDown) {
-                        const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
-                        updatePointer(e.clientX, e.clientY);
-                        if (moveDist < 14 && checkHeroIntersection()) {
-                            triggerAuroraAndLetter();
+                if (p.type === 'sunflower') {
+                    drawSunflowerSprite(pCtx, p.x, p.y, p.pulse);
+                } else if (p.type === 'peashooter') {
+                    drawPeashooterSprite(pCtx, p.x, p.y, p.pulse, p.recoil);
+                } else {
+                    drawWallnutSprite(pCtx, p.x, p.y, p.pulse, p.hp / p.maxHp);
+                }
+
+                if (p.hp < p.maxHp) {
+                    pCtx.fillStyle = 'rgba(255,255,255,0.2)';
+                    pCtx.fillRect(p.x - 16, p.y + 26, 32, 4);
+                    pCtx.fillStyle = '#4ade80';
+                    pCtx.fillRect(p.x - 16, p.y + 26, 32 * (p.hp / p.maxHp), 4);
+                }
+            }
+
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const proj = projectiles[i];
+                proj.x += proj.vx * dt;
+
+                pCtx.fillStyle = '#4ade80';
+                pCtx.shadowColor = '#22c55e';
+                pCtx.shadowBlur = 10;
+                pCtx.beginPath();
+                pCtx.arc(proj.x, proj.y, 6.5, 0, Math.PI * 2);
+                pCtx.fill();
+                pCtx.fillStyle = '#bbf7d0';
+                pCtx.beginPath();
+                pCtx.arc(proj.x - 2, proj.y - 2, 2.2, 0, Math.PI * 2);
+                pCtx.fill();
+                pCtx.shadowBlur = 0;
+
+                let hit = false;
+                for (let j = zombies.length - 1; j >= 0; j--) {
+                    const z = zombies[j];
+                    if (z.row === proj.row && Math.abs(proj.x - z.x) < 22) {
+                        z.hp -= 24;
+                        z.hitFlash = 0.12;
+                        spawnSparks(proj.x, proj.y, '#4ade80', 8);
+                        hit = true;
+                        if (z.hp <= 0) {
+                            score = Math.min(WIN_SCORE, score + 100);
+                            spawnSparks(z.x, z.y, '#f472b6', 24);
+                            spawnSparks(z.x, z.y, '#fde047', 14);
+                            spawnFloatingText(z.x, z.y - 22, '+100', '#fbcfe8');
+                            zombies.splice(j, 1);
+
+                            const earnedCocas = Math.floor(score / 1000);
+                            if (earnedCocas > cocaCount) {
+                                triggerCocaReward(getCurrentWave());
+                            }
+                            updateHud();
+
+                            if (score >= WIN_SCORE && !hasWon) {
+                                triggerVictory();
+                            }
                         }
+                        break;
                     }
-                    isPointerDown = false;
-                });
-
-                window.addEventListener('resize', () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                    const pr = Math.min(window.devicePixelRatio, 2);
-                    renderer.setPixelRatio(pr);
-                    if (uniforms) uniforms.uPixelRatio.value = pr;
-                    if (stardustUniforms) stardustUniforms.uPixelRatio.value = pr;
-                    if (starsUniforms) starsUniforms.uPixelRatio.value = pr;
-                });
-            }
-
-            function animate() {
-                requestAnimationFrame(animate);
-
-                const delta = Math.min(clock.getDelta(), 0.05);
-                const elapsed = clock.getElapsedTime();
-
-                if (morphProgress < 1.0) {
-                    morphProgress = Math.min(1.0, morphProgress + delta * 0.24 * CONFIG.morphSpeed);
                 }
 
-                if (morphProgress > 0.90 && !hintShown && !letterOpen) {
-                    hintShown = true;
-                    const hintPill = document.getElementById('hint-pill');
-                    if (hintPill) hintPill.style.opacity = '1';
+                if (hit || proj.x > pvzCanvas.width + 20) {
+                    projectiles.splice(i, 1);
                 }
-
-                const targetAurora = auroraActive ? 1.0 : 0.0;
-                auroraProgress += (targetAurora - auroraProgress) * delta * 1.5;
-
-                const targetLetter = letterOpen ? 1.0 : 0.0;
-                letterProgress += (targetLetter - letterProgress) * delta * 2.6;
-
-                const targetHover = isHoveringHero ? 1.0 : 0.0;
-                heroHover += (targetHover - heroHover) * delta * 6.0;
-
-                smoothCursor.lerp(worldCursor, delta * 8.0);
-                cursorEnergy = Math.max(0.0, cursorEnergy - delta * 1.4);
-
-                uniforms.uTime.value = elapsed;
-                uniforms.uMorph.value = morphProgress;
-                uniforms.uAurora.value = auroraProgress;
-                uniforms.uLetterOpen.value = letterProgress;
-                uniforms.uHeroHover.value = heroHover;
-                uniforms.uCursorPos.value.copy(smoothCursor);
-                uniforms.uCursorEnergy.value = cursorEnergy;
-
-                stardustUniforms.uTime.value = elapsed;
-                stardustUniforms.uAurora.value = auroraProgress;
-
-                starsUniforms.uTime.value = elapsed;
-
-                nebulaUniforms.uTime.value = elapsed;
-                nebulaUniforms.uAurora.value = auroraProgress;
-
-                auroraUniforms.uTime.value = elapsed;
-                auroraUniforms.uAurora.value = auroraProgress;
-
-                currentCameraRot.x += (targetCameraRot.x - currentCameraRot.x) * delta * 3.5;
-                currentCameraRot.y += (targetCameraRot.y - currentCameraRot.y) * delta * 3.5;
-
-                const isMobile = window.innerWidth < 640;
-                const camRadius = isMobile ? 12.8 : 11.4;
-                const swayAmp = 0.07 * (1.0 - letterProgress * 0.75);
-                const autoSway = Math.sin(elapsed * 0.22) * swayAmp;
-                const totalYaw = currentCameraRot.y * (1.0 - letterProgress * 0.68) + autoSway;
-
-                const frameShiftX = letterProgress * (isMobile ? 1.45 : 3.20);
-                const frameShiftY = letterProgress * (isMobile ? -0.45 : 0.05);
-
-                const desiredCamX = Math.sin(totalYaw) * camRadius + frameShiftX * 0.76;
-                const desiredCamZ = Math.cos(totalYaw) * camRadius - 1.2 - letterProgress * 0.55;
-                const desiredCamY = 1.15 + Math.sin(currentCameraRot.x) * 6.0 + frameShiftY;
-
-                currentCamPos.x += (desiredCamX - currentCamPos.x) * delta * 3.2;
-                currentCamPos.y += (desiredCamY - currentCamPos.y) * delta * 3.2;
-                currentCamPos.z += (desiredCamZ - currentCamPos.z) * delta * 3.2;
-
-                const desiredLookAt = new THREE.Vector3(
-                    frameShiftX,
-                    -0.35 + frameShiftY,
-                    -2.5 + letterProgress * 1.5
-                );
-                currentLookAt.lerp(desiredLookAt, delta * 3.4);
-
-                camera.position.copy(currentCamPos);
-                camera.lookAt(currentLookAt);
-
-                renderer.render(scene, camera);
             }
 
-            window.onload = function () {
-                init();
-                animate();
-            };
-        })();
+            for (let i = zombies.length - 1; i >= 0; i--) {
+                const z = zombies[i];
+                z.wobble += dt * 4;
+                z.hitFlash = Math.max(0, z.hitFlash - dt);
+
+                let blockingPlant = null;
+                for (let p of plants) {
+                    if (p.row === z.row && z.x - p.x > 0 && z.x - p.x < 34) {
+                        blockingPlant = p;
+                        break;
+                    }
+                }
+
+                if (blockingPlant) {
+                    blockingPlant.hp -= 24 * dt;
+                    if (blockingPlant.hp <= 0) {
+                        spawnSparks(blockingPlant.x, blockingPlant.y, '#f472b6', 16);
+                        plants = plants.filter(item => item !== blockingPlant);
+                    }
+                } else {
+                    z.x -= z.speed * dt;
+                }
+
+                const bobY = z.y + Math.sin(z.wobble) * 2.2;
+                drawZombieSprite(pCtx, z, bobY);
+
+                if (z.x < GRID_LEFT - 18) {
+                    spawnSparks(z.x, bobY, '#84a98c', 20);
+                    zombies.splice(i, 1);
+                }
+            }
+
+            for (let i = suns.length - 1; i >= 0; i--) {
+                const s = suns[i];
+                s.life -= dt;
+                s.pulse += dt * 5;
+                if (s.y < s.targetY) {
+                    s.y += s.vy * dt;
+                }
+
+                const r = 15 + Math.sin(s.pulse) * 2.2;
+                drawSunSprite(pCtx, s.x, s.y, r);
+
+                if (s.life <= 0) {
+                    suns.splice(i, 1);
+                }
+            }
+
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                const sp = sparks[i];
+                sp.x += sp.vx * dt;
+                sp.y += sp.vy * dt;
+                sp.life -= dt * 1.8;
+                if (sp.life <= 0) {
+                    sparks.splice(i, 1);
+                    continue;
+                }
+                pCtx.globalAlpha = Math.max(0, sp.life);
+                pCtx.fillStyle = sp.color;
+                pCtx.beginPath();
+                pCtx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+                pCtx.fill();
+                pCtx.globalAlpha = 1;
+            }
+
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y -= 28 * dt;
+                ft.life -= dt * 1.2;
+                if (ft.life <= 0) {
+                    floatingTexts.splice(i, 1);
+                    continue;
+                }
+                pCtx.globalAlpha = Math.max(0, ft.life);
+                pCtx.font = '700 13px "Plus Jakarta Sans", sans-serif';
+                pCtx.textAlign = 'center';
+                pCtx.fillStyle = ft.color;
+                pCtx.fillText(ft.text, ft.x, ft.y);
+                pCtx.globalAlpha = 1;
+            }
+        }
+
+        startGameBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isGameOpen = true;
+            letterCard.classList.remove('open');
+            gameOverlay.classList.add('active');
+            resetGame();
+            spawnSkySun();
+            lastGameTime = 0;
+            gameLoopId = requestAnimationFrame(updateAndDrawGame);
+        });
+
+        function returnToGarden() {
+            isGameOpen = false;
+            gameOverlay.classList.remove('active');
+            if (gameLoopId) cancelAnimationFrame(gameLoopId);
+            letterCard.classList.add('open');
+        }
+
+        exitGameBtn.addEventListener('click', returnToGarden);
+        victoryGardenBtn.addEventListener('click', returnToGarden);
+
+        playAgainBtn.addEventListener('click', () => {
+            resetGame();
+            spawnSkySun();
+        });
     </script>
 </body>
 
