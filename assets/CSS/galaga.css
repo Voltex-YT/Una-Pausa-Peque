@@ -1,0 +1,172 @@
+#galaga-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(5, 3, 16, 0.74);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: max(12px, env(safe-area-inset-top, 12px)) 12px max(12px, env(safe-area-inset-bottom, 12px));
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.55s ease;
+}
+
+#galaga-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#galaga-hud {
+    width: min(860px, 96vw);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.lives-pill {
+    padding: 8px 14px;
+    border-radius: 14px;
+    background: rgba(24, 18, 48, 0.85);
+    border: 1px solid rgba(244, 114, 182, 0.45);
+    color: #fbcfe8;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.wave-pill {
+    padding: 8px 14px;
+    border-radius: 14px;
+    background: rgba(24, 18, 48, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    color: #bae6fd;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+#exit-galaga-btn {
+    padding: 8px 13px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8f5ff;
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+#exit-galaga-btn:hover {
+    background: rgba(244, 114, 182, 0.28);
+}
+
+#galaga-canvas-wrap {
+    position: relative;
+    width: min(860px, 96vw);
+    display: flex;
+    justify-content: center;
+}
+
+#galaga-canvas {
+    width: 100%;
+    height: min(460px, 64dvh);
+    border-radius: 22px;
+    background: radial-gradient(circle at 50% 25%, rgba(28, 16, 56, 0.92) 0%, rgba(6, 5, 18, 0.96) 100%);
+    border: 1px solid rgba(186, 230, 253, 0.28);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72), 0 0 36px rgba(56, 189, 248, 0.16);
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    touch-action: none;
+    cursor: crosshair;
+}
+
+#galaga-coca-toast {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-16px) scale(0.92);
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.92), rgba(127, 29, 29, 0.95));
+    border: 1px solid rgba(254, 202, 202, 0.75);
+    color: #fff;
+    font-weight: 600;
+    font-size: clamp(0.8rem, 2.3vw, 0.95rem);
+    box-shadow: 0 12px 32px rgba(220, 38, 38, 0.48), 0 0 24px rgba(253, 224, 71, 0.35);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    white-space: nowrap;
+    z-index: 5;
+}
+
+#galaga-coca-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+
+#galaga-victory-modal {
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    background: rgba(10, 6, 26, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    z-index: 8;
+}
+
+#galaga-victory-modal.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#galaga-victory-modal h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    background: linear-gradient(120deg, #fff5fa, #fde68a, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+
+#galaga-victory-modal p {
+    max-width: 440px;
+    font-size: clamp(0.9rem, 2.2vw, 1.02rem);
+    line-height: 1.6;
+    color: rgba(245, 238, 255, 0.9);
+    margin-bottom: 20px;
+}
+
+#galaga-tip {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: rgba(245, 238, 255, 0.75);
+    text-align: center;
+}
+
+@media (max-width: 860px) and (orientation: portrait) {
+    #galaga-canvas {
+        height: min(410px, 56dvh);
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    #galaga-canvas {
+        height: 68dvh;
+    }
+}
